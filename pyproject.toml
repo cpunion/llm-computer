@@ -17,6 +17,7 @@ llm-computer-gemini = "llm_computer.gemini_cli:main"
 llm-computer-compare = "llm_computer.comparison:main"
 llm-computer-article-examples = "llm_computer.article_examples:main"
 llm-computer-sudoku-validate = "llm_computer.sudoku_validation:main"
+llm-computer-article-story = "llm_computer.article_story:main"
 
 [project.optional-dependencies]
 transformers = [

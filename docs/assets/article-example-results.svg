@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="860" viewBox="0 0 1500 860" fill="none">
+<defs>
+<linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#F97316"/>
+<stop offset="100%" stop-color="#0F766E"/>
+</linearGradient>
+<filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.12"/>
+</filter>
+</defs>
+<rect width="1500" height="860" fill="#FFFDF7"/>
+<text x="80" y="110" font-size="52" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Article Examples: Hungarian and Sudoku</text>
+<text x="80" y="156" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">The same repository now validates the article’s published examples instead of only toy arithmetic.</text>
+<rect x="80" y="210" width="650" height="560" rx="30" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3"/>
+<rect x="770" y="210" width="650" height="560" rx="30" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="280" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Hungarian 10×10</text>
+<text x="810" y="280" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Sudoku</text>
+<text x="120" y="366" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">reference</text>
+<rect x="300" y="340" width="1.1" height="40" rx="14" fill="#0F766E"/>
+<text x="312" y="367" font-size="18" font-family="JetBrains Mono, Menlo, monospace" fill="#fff">16.70 ms</text>
+<text x="300" y="406" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">result=206 steps=17491</text>
+<text x="120" y="462" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">append_only_naive</text>
+<rect x="300" y="436" width="420.0" height="40" rx="14" fill="#F97316"/>
+<text x="312" y="463" font-size="18" font-family="JetBrains Mono, Menlo, monospace" fill="#fff">6.305 s</text>
+<text x="300" y="502" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">result=206 steps=17491</text>
+<text x="120" y="558" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">append_only_hull</text>
+<rect x="300" y="532" width="32.3" height="40" rx="14" fill="#2563EB"/>
+<text x="312" y="559" font-size="18" font-family="JetBrains Mono, Menlo, monospace" fill="#fff">485.46 ms</text>
+<text x="300" y="598" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">result=206 steps=17491</text>
+<text x="120" y="654" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">transformer_hull</text>
+<rect x="300" y="628" width="115.2" height="40" rx="14" fill="#7C3AED"/>
+<text x="312" y="655" font-size="18" font-family="JetBrains Mono, Menlo, monospace" fill="#fff">1.729 s</text>
+<text x="300" y="694" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">result=206 steps=17491</text>
+<text x="810" y="344" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Reference checksum</text>
+<text x="810" y="420" font-size="64" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="url(#heroGradient)">1276684605</text>
+<text x="810" y="474" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">steps: 22,370,167</text>
+<text x="810" y="512" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#0F172A">elapsed: 26.895 s</text>
+<text x="810" y="568" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Puzzle: 8..........36......7..9.2.....</text>
+<text x="810" y="624" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Transformer subset: yes</text>
+<text x="810" y="680" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Meaning: the long example exists inside the same opcode subset as the tiny verifier.</text>
+</svg>

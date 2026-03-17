@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1040" viewBox="0 0 1400 1040" fill="none">
+<defs>
+<linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#F97316"/>
+<stop offset="100%" stop-color="#0F766E"/>
+</linearGradient>
+<filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.12"/>
+</filter>
+</defs>
+<rect width="1400" height="1040" fill="#F7F2E8"/>
+<text x="80" y="110" font-size="54" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Five Ways We Moved Execution Closer to the Model</text>
+<text x="80" y="156" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Ordered by execution depth, not by raw speed.</text>
+<rect x="80" y="210" width="1240" height="146" rx="28" fill="#E2E8F0" stroke="#94A3B8" stroke-width="4" filter="url(#softShadow)"/>
+<circle cx="138" cy="254" r="28" fill="#94A3B8"/>
+<text x="138" y="263" text-anchor="middle" font-size="28" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="#FFF">1</text>
+<text x="190" y="262" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Reference Direct</text>
+<text x="190" y="296" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#334155">Pure semantic control with no model in the loop.</text>
+<text x="190" y="330" font-size="20" font-family="JetBrains Mono, Menlo, monospace" fill="#0F172A">The service calls the reference WASM executor directly.</text>
+<path d="M700 364 L700 348" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 10"/>
+<path d="M700 356 L686 334 L714 334 Z" fill="#94A3B8"/>
+<rect x="80" y="362" width="1240" height="146" rx="28" fill="#FED7AA" stroke="#F97316" stroke-width="4" filter="url(#softShadow)"/>
+<circle cx="138" cy="406" r="28" fill="#F97316"/>
+<text x="138" y="415" text-anchor="middle" font-size="28" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="#FFF">2</text>
+<text x="190" y="414" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Append-Only Naive Direct</text>
+<text x="190" y="448" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#334155">The article mechanism without model integration or geometric acceleration.</text>
+<text x="190" y="482" font-size="20" font-family="JetBrains Mono, Menlo, monospace" fill="#0F172A">The service calls the append-only executor with a naive timeline scan.</text>
+<path d="M700 516 L700 500" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 10"/>
+<path d="M700 508 L686 486 L714 486 Z" fill="#94A3B8"/>
+<rect x="80" y="514" width="1240" height="146" rx="28" fill="#FDE68A" stroke="#D97706" stroke-width="4" filter="url(#softShadow)"/>
+<circle cx="138" cy="558" r="28" fill="#D97706"/>
+<text x="138" y="567" text-anchor="middle" font-size="28" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="#FFF">3</text>
+<text x="190" y="566" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Closed-Source Sidecar</text>
+<text x="190" y="600" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#334155">A hosted model delegates execution through a strict tool boundary.</text>
+<text x="190" y="634" font-size="20" font-family="JetBrains Mono, Menlo, monospace" fill="#0F172A">Gemini plans; the sidecar executes; Gemini narrates the final answer.</text>
+<path d="M700 668 L700 652" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 10"/>
+<path d="M700 660 L686 638 L714 638 Z" fill="#94A3B8"/>
+<rect x="80" y="666" width="1240" height="146" rx="28" fill="#BFDBFE" stroke="#2563EB" stroke-width="4" filter="url(#softShadow)"/>
+<circle cx="138" cy="710" r="28" fill="#2563EB"/>
+<text x="138" y="719" text-anchor="middle" font-size="28" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="#FFF">4</text>
+<text x="190" y="718" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Open-Source Wrapper</text>
+<text x="190" y="752" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#334155">An open-weight runtime intercepts execution requests at the prompt boundary.</text>
+<text x="190" y="786" font-size="20" font-family="JetBrains Mono, Menlo, monospace" fill="#0F172A">Qwen emits a structured execution request; the runtime resolves it and feeds back a response span.</text>
+<path d="M700 820 L700 804" stroke="#94A3B8" stroke-width="6" stroke-linecap="round" stroke-dasharray="10 10"/>
+<path d="M700 812 L686 790 L714 790 Z" fill="#94A3B8"/>
+<rect x="80" y="818" width="1240" height="146" rx="28" fill="#99F6E4" stroke="#0F766E" stroke-width="4" filter="url(#softShadow)"/>
+<circle cx="138" cy="862" r="28" fill="#0F766E"/>
+<text x="138" y="871" text-anchor="middle" font-size="28" font-family="JetBrains Mono, Menlo, monospace" font-weight="700" fill="#FFF">5</text>
+<text x="190" y="870" font-size="34" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Open-Source Execution Block</text>
+<text x="190" y="904" font-size="22" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#334155">The closest current path to in-model execution without replacing real model weights.</text>
+<text x="190" y="938" font-size="20" font-family="JetBrains Mono, Menlo, monospace" fill="#0F172A">Qwen still emits the request, but the runtime resolves it natively and returns compact execution feedback instead of an `exec_response` text block.</text>
+</svg>

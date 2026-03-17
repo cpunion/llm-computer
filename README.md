@@ -59,6 +59,8 @@ This repository does **not** claim to fully reproduce the original article:
   request-boundary interception experiments.
 - `src/llm_computer/article_examples.py`: validation harness for the article's
   Hungarian and Sudoku examples.
+- `src/llm_computer/article_story.py`: data-driven article and figure generator
+  for the five implementation ladder.
 - `src/llm_computer/sudoku_validation.py`: Sudoku-specific checksum and
   prefix-state validation harness.
 - `src/llm_computer/comparison.py`: unified five-way comparison harness across
@@ -84,6 +86,8 @@ This repository does **not** claim to fully reproduce the original article:
   Transformers orchestration scaffold.
 - `tests/test_article_examples.py`: fast regression coverage for the article's
   Hungarian and Sudoku examples.
+- `tests/test_article_story.py`: regression coverage for the article generator
+  and visual asset emitters.
 - `tests/test_sudoku_validation.py`: regression coverage for the Sudoku
   checksum and prefix-state validation harness.
 - `tests/test_comparison.py`: regression tests for the five-way comparison
@@ -93,6 +97,8 @@ This repository does **not** claim to fully reproduce the original article:
   Hungarian and Sudoku examples.
 - `docs/article-example-validation.json`: raw machine-readable article-example
   validation output.
+- `docs/five-implementations-article.md`: the long-form article that explains
+  the five implementation ladder with generated figures and animation.
 - `docs/sudoku-result-validation.md`: full-checksum and prefix-state validation
   report for the article's Sudoku example.
 - `docs/sudoku-result-validation.json`: raw machine-readable Sudoku validation
@@ -112,6 +118,8 @@ This repository does **not** claim to fully reproduce the original article:
   steps.
 - `docs/model-integration-plan.md`: open-source and closed-source integration
   plans.
+- `docs/assets/`: generated SVG, PNG, GIF, and MP4 assets used by the article.
+- `visuals/remotion/`: Remotion source for the animated article overview.
 
 ## Quick start
 
@@ -127,6 +135,7 @@ uv run llm-computer-compare \
   --gemini-model gemini-3-flash-preview
 uv run llm-computer-article-examples
 uv run llm-computer-sudoku-validate
+uv run llm-computer-article-story
 ```
 
 ## Current status
@@ -192,5 +201,7 @@ Current live-validation status:
   reference path at fixed step budgets
 - the transformer path now exposes an explicit execution-layer split between
   feature extraction, transition gating, and append-only writeback
+- the repository now includes a generated long-form article with SVG figures
+  and a Remotion overview animation covering all five implementation layers
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

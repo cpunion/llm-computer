@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="940" viewBox="0 0 1500 940" fill="none">
+<defs>
+<linearGradient id="heroGradient" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="#F97316"/>
+<stop offset="100%" stop-color="#0F766E"/>
+</linearGradient>
+<filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+<feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.12"/>
+</filter>
+</defs>
+<rect width="1500" height="940" fill="#FEFCE8"/>
+<text x="80" y="110" font-size="52" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Where Execution Actually Happens</text>
+<text x="80" y="156" font-size="24" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">The same final answer `42` can come from very different runtime boundaries.</text>
+<rect x="80" y="220" width="1340" height="96" rx="26" fill="#fff" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="258" font-size="30" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Reference Direct</text>
+<text x="120" y="290" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">The service calls the reference WASM executor directly.</text>
+<rect x="682" y="240" width="108" height="44" rx="16" fill="#F1F5F9"/>
+<text x="736" y="269" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Prompt</text>
+<rect x="842" y="240" width="108" height="44" rx="16" fill="#F1F5F9"/>
+<text x="896" y="269" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Model</text>
+<path d="M794 262 L834 262" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1002" y="240" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1056" y="269" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Runtime</text>
+<path d="M954 262 L994 262" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1162" y="240" width="108" height="44" rx="16" fill="#F97316"/>
+<text x="1216" y="269" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#fff">Executor</text>
+<path d="M1114 262 L1154 262" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1302" y="240" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1356" y="269" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Answer</text>
+<path d="M1274 262 L1294 262" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<text x="740" y="302" font-size="16" font-family="JetBrains Mono, Menlo, monospace" fill="#F97316">direct service execution</text>
+<rect x="80" y="352" width="1340" height="96" rx="26" fill="#fff" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="390" font-size="30" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Append-Only Naive Direct</text>
+<text x="120" y="422" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">The service calls the append-only executor with a naive timeline scan.</text>
+<rect x="682" y="372" width="108" height="44" rx="16" fill="#F1F5F9"/>
+<text x="736" y="401" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Prompt</text>
+<rect x="842" y="372" width="108" height="44" rx="16" fill="#F1F5F9"/>
+<text x="896" y="401" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Model</text>
+<path d="M794 394 L834 394" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1002" y="372" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1056" y="401" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Runtime</text>
+<path d="M954 394 L994 394" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1162" y="372" width="108" height="44" rx="16" fill="#F97316"/>
+<text x="1216" y="401" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#fff">Executor</text>
+<path d="M1114 394 L1154 394" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1302" y="372" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1356" y="401" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Answer</text>
+<path d="M1274 394 L1294 394" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<text x="740" y="434" font-size="16" font-family="JetBrains Mono, Menlo, monospace" fill="#F97316">direct service execution</text>
+<rect x="80" y="484" width="1340" height="96" rx="26" fill="#fff" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="522" font-size="30" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Closed-Source Sidecar</text>
+<text x="120" y="554" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Gemini plans; the sidecar executes; Gemini narrates the final answer.</text>
+<rect x="682" y="504" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="736" y="533" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Prompt</text>
+<rect x="842" y="504" width="108" height="44" rx="16" fill="#CCFBF1"/>
+<text x="896" y="533" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Model</text>
+<path d="M794 526 L834 526" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1002" y="504" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1056" y="533" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Runtime</text>
+<path d="M954 526 L994 526" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1162" y="504" width="108" height="44" rx="16" fill="#0F766E"/>
+<text x="1216" y="533" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#fff">Executor</text>
+<path d="M1114 526 L1154 526" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1302" y="504" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1356" y="533" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Answer</text>
+<path d="M1274 526 L1294 526" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<text x="740" y="566" font-size="16" font-family="JetBrains Mono, Menlo, monospace" fill="#0F766E">Gemini tool-calling via gemini-3-flash-preview</text>
+<rect x="80" y="616" width="1340" height="96" rx="26" fill="#fff" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="654" font-size="30" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Open-Source Wrapper</text>
+<text x="120" y="686" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Qwen emits a structured execution request; the runtime resolves it and feeds back a response span.</text>
+<rect x="682" y="636" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="736" y="665" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Prompt</text>
+<rect x="842" y="636" width="108" height="44" rx="16" fill="#DBEAFE"/>
+<text x="896" y="665" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Model</text>
+<path d="M794 658 L834 658" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1002" y="636" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1056" y="665" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Runtime</text>
+<path d="M954 658 L994 658" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1162" y="636" width="108" height="44" rx="16" fill="#2563EB"/>
+<text x="1216" y="665" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#fff">Executor</text>
+<path d="M1114 658 L1154 658" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1302" y="636" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1356" y="665" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Answer</text>
+<path d="M1274 658 L1294 658" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<text x="740" y="698" font-size="16" font-family="JetBrains Mono, Menlo, monospace" fill="#2563EB">wrapper + structured + prefilled prefix</text>
+<rect x="80" y="748" width="1340" height="96" rx="26" fill="#fff" stroke="#CBD5E1" stroke-width="3"/>
+<text x="120" y="786" font-size="30" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Open-Source Execution Block</text>
+<text x="120" y="818" font-size="18" font-family="Avenir Next, Trebuchet MS, sans-serif" fill="#475569">Qwen still emits the request, but the runtime resolves it natively and returns compact execution feedback instead of an `exec_response` text block.</text>
+<rect x="682" y="768" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="736" y="797" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Prompt</text>
+<rect x="842" y="768" width="108" height="44" rx="16" fill="#DBEAFE"/>
+<text x="896" y="797" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Model</text>
+<path d="M794 790 L834 790" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1002" y="768" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1056" y="797" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Runtime</text>
+<path d="M954 790 L994 790" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1162" y="768" width="108" height="44" rx="16" fill="#2563EB"/>
+<text x="1216" y="797" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#fff">Executor</text>
+<path d="M1114 790 L1154 790" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<rect x="1302" y="768" width="108" height="44" rx="16" fill="#E2E8F0"/>
+<text x="1356" y="797" text-anchor="middle" font-size="20" font-family="Avenir Next, Trebuchet MS, sans-serif" font-weight="700" fill="#0F172A">Answer</text>
+<path d="M1274 790 L1294 790" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+<text x="740" y="830" font-size="16" font-family="JetBrains Mono, Menlo, monospace" fill="#2563EB">native execution-block + pinned transformer_hull backend</text>
+</svg>

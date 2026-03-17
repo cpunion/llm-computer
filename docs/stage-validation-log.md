@@ -418,6 +418,33 @@ Observed outcome:
 - new unit tests verify the staged execution flow on representative arithmetic
   and memory-store instructions
 
+## Stage 14: Article Storytelling Assets
+
+Goal:
+
+- generate an English long-form article that explains the five implementation
+  ladder from shallow to deep
+- generate reusable SVG figures plus a Remotion overview animation from the
+  same underlying validation data
+
+Validation:
+
+```bash
+./scripts/stage14_article_storytelling.sh
+```
+
+Observed outcome:
+
+- the article is generated at `docs/five-implementations-article.md`
+- the visual asset set is generated under `docs/assets/`
+- the Remotion source lives under `visuals/remotion/`
+- the rendered animation outputs are:
+  - `docs/assets/five-implementation-overview.png`
+  - `docs/assets/five-implementation-overview.mp4`
+  - `docs/assets/five-implementation-overview.gif`
+- the stage uses `Node 24` plus the local `Google Chrome.app` executable to
+  avoid headless-shell launch failures observed with the default configuration
+
 The remaining gap to the article's stronger end state is still the same:
 
 - no true execution heads inside a real model
