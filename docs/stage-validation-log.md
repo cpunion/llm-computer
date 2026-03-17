@@ -271,6 +271,42 @@ Observed outcome:
   `intercepted_requests=1`, `structured_captures=1`,
   `native_execution_rounds=1`, and `runtime_answer_fallbacks=0`
 
+## Stage 10: Five-Way Comparison Matrix
+
+Goal:
+
+- collapse the repository's final comparison target into one reproducible
+  harness with five rows:
+  - semantic control
+  - naive direct append-only execution
+  - open-source wrapper
+  - open-source execution block
+  - closed-source sidecar
+
+Validation:
+
+```bash
+./scripts/stage10_five_way_comparison.sh
+```
+
+Observed outcome:
+
+- `47` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the comparison harness wrote
+  `docs/five-way-comparison.md` and `docs/five-way-comparison.json`
+- all five comparison rows returned the final value `42`
+- the open-source wrapper used execution successfully with
+  `intercepted_requests=1` and `structured_captures=1`
+- the open-source execution-block path also used execution successfully with
+  `intercepted_requests=1`, `structured_captures=1`, and
+  `native_execution_rounds=1`
+- the closed-source Gemini path completed successfully with `tool_calls=1`
+- in the recorded run, `open_source_execution_block` completed faster than
+  `open_source_wrapper`, while the hosted Gemini sidecar remained the slowest
+  end-to-end path
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -288,6 +324,8 @@ claims:
    that further reduce how much request scaffolding the model must emit
 6. the open-source path now also supports a native execution-block mode that
    removes the `<exec_response>` text round-trip from the execution loop
+7. the repository now has one reproducible five-way matrix that compares the
+   exact final target set requested for the article draft
 
 The remaining gap to the article's stronger end state is still the same:
 

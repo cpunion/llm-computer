@@ -14,6 +14,7 @@ dependencies = []
 llm-computer = "llm_computer.__main__:main"
 llm-computer-qwen = "llm_computer.qwen_cli:main"
 llm-computer-gemini = "llm_computer.gemini_cli:main"
+llm-computer-compare = "llm_computer.comparison:main"
 
 [project.optional-dependencies]
 transformers = [

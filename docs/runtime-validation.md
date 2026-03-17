@@ -143,3 +143,21 @@ Validated native execution-block command:
 ```bash
 ./scripts/stage9_qwen_execution_block.sh
 ```
+
+Validated five-way comparison command:
+
+```bash
+./scripts/stage10_five_way_comparison.sh
+```
+
+Observed result:
+
+- all five comparison rows completed successfully and returned `42`
+- `reference_direct` and `append_only_naive_direct` remained the fastest rows
+  because they bypass model orchestration entirely
+- `open_source_execution_block` completed faster than
+  `open_source_wrapper` in the recorded run while keeping
+  `intercepted_requests=1` and `structured_captures=1`
+- `closed_source_sidecar` completed successfully with `tool_calls=1`
+- the full recorded output is preserved in `docs/five-way-comparison.md` and
+  `docs/five-way-comparison.json`

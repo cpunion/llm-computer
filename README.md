@@ -57,6 +57,8 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/qwen_cli.py`: `uv run` entry point for Qwen3 validation.
   It also supports cached smaller Qwen-family models for smoke validation and
   request-boundary interception experiments.
+- `src/llm_computer/comparison.py`: unified five-way comparison harness across
+  direct, open-source, and closed-source paths.
 - `src/llm_computer/service.py`: execution service boundary over the available
   backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
@@ -75,8 +77,12 @@ This repository does **not** claim to fully reproduce the original article:
   prototypes.
 - `tests/test_qwen_transformers.py`: regression tests for the Qwen3
   Transformers orchestration scaffold.
+- `tests/test_comparison.py`: regression tests for the five-way comparison
+  harness.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
+- `docs/five-way-comparison.md`: latest five-way comparison results.
+- `docs/five-way-comparison.json`: raw machine-readable comparison output.
 - `docs/open-source-selection.md`: chosen open-source model and runtime
   baseline.
 - `docs/gemini-integration.md`: current Gemini integration status and usage.
@@ -98,6 +104,10 @@ This repository does **not** claim to fully reproduce the original article:
 uv sync --python 3.12 --extra transformers --extra gemini
 uv run llm-computer
 uv run python -m unittest discover -s tests -v
+uv run llm-computer-compare \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --gemini-model gemini-3-flash-preview
 ```
 
 ## Current status
@@ -151,5 +161,8 @@ Current live-validation status:
   cached Qwen-family model
 - the open-source execution-block mode has also been validated end-to-end with
   the same cached Qwen-family model
+- the unified five-way comparison now succeeds end-to-end across semantic
+  control, naive direct execution, open-source wrapper, open-source execution
+  block, and closed-source sidecar
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download
