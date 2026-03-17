@@ -7,6 +7,9 @@ Date: 2026-03-17
 This document describes how the repository's execution architecture can be
 integrated with open-source transformer models and with closed-source LLM APIs.
 
+The chosen baseline open-source stack is documented in
+`docs/open-source-selection.md`.
+
 The guiding principle is:
 
 - keep the current WASM frontend and trace representation stable,
@@ -37,6 +40,17 @@ This keeps the interface stable even if the backend changes from a sidecar to a
 runtime-integrated transformer.
 
 ## Open-source model path
+
+Chosen starting point:
+
+- model: `Qwen3-8B`
+- runtime: `Transformers`
+
+Chosen follow-up path:
+
+- `Qwen3-8B + SGLang`
+- `Qwen3-14B` only after the `8B` path is stable
+- `vLLM` and `TensorRT-LLM` only after the execution-lane interface is fixed
 
 ### Phase 0: Sidecar execution
 

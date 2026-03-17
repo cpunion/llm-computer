@@ -61,6 +61,8 @@ This repository does **not** claim to fully reproduce the original article:
   prototypes.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
+- `docs/open-source-selection.md`: chosen open-source model and runtime
+  baseline.
 - `docs/service-protocol.md`: stable execution contract for sidecars and tools.
 - `docs/transformer-alignment.md`: current transformer-alignment status and next
   steps.
