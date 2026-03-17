@@ -31,6 +31,7 @@ It provides:
 - `QwenExecutionOrchestrator`
   - adds execution-lane system instructions
   - supports both `tagged` and `structured` prompt modes
+  - exposes a default request prefix for runtime prefill experiments
   - detects `<exec_request>...</exec_request>` blocks
   - resolves them through the local execution sidecar
   - feeds the resulting `<exec_response>...</exec_response>` back into the next
@@ -56,6 +57,9 @@ What completed successfully:
   the closing tag
 - a fourth full live execution round-trip completed successfully with the same
   model through the built-in `structured` prompt mode
+- a fifth full live execution round-trip completed successfully with the same
+  model through a prefilled structured prompt mode where the runtime injected
+  the opening `{`
 
 Observed successful open-source live run:
 
@@ -112,6 +116,21 @@ Observed successful open-source live run with built-in structured prompt mode:
   - `structured_captures=1`
   - `turns=2`
 
+Observed successful open-source live run with prefilled structured prompt mode:
+
+- model: `Qwen/Qwen2.5-0.5B-Instruct`
+- device: `mps`
+- execution prompt mode: `structured`
+- runtime prefill: opening `{` injected before generation
+- interception: `--intercept-request-boundary`
+- task: compute `6 * 7`
+- runtime summary:
+  - `used_execution=true`
+  - `intercepted_requests=1`
+  - `structured_captures=1`
+  - `runtime_answer_fallbacks=1`
+  - `turns=2`
+
 What did not complete in this session:
 
 - a full live generation run from a downloaded `Qwen/Qwen3-8B` checkpoint
@@ -135,6 +154,8 @@ Interpretation:
 - the deeper structured-capture path is also validated end-to-end through the
   same real cached Qwen-family model
 - the built-in structured prompt mode is also validated end-to-end through the
+  same real cached Qwen-family model
+- the prefilled structured prompt mode is also validated end-to-end through the
   same real cached Qwen-family model
 - the remaining open-source gap is specifically `Qwen3-8B` live validation, not
   the generic `Transformers + sidecar` integration
@@ -200,6 +221,17 @@ uv run llm-computer-qwen \
   --max-new-tokens 128 \
   --system 'Protocol requirement: do not answer directly. Your first reply must be exactly one valid JSON object and nothing else. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
+
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --execution-prompt-mode structured \
+  --intercept-request-boundary \
+  --prefill-request-prefix \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: do not answer directly. The runtime has already emitted the opening { of the JSON object. Continue with the remaining keys only, without restarting the object. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
 ```
 
 ## Why this is the right first step
@@ -216,7 +248,7 @@ This integration is intentionally conservative:
 The next implementation sequence should be:
 
 1. Complete one real local Qwen3 checkpoint download and rerun the scaffold.
-2. Replace the current structured-capture wrapper with a deeper runtime
+2. Replace the current structured-capture and prefix-prefill wrapper with a deeper runtime
    interception path inside the inference engine.
 3. Add execution-segment handling that is separate from ordinary conversation
    tokens.

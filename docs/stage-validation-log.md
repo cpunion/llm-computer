@@ -225,6 +225,29 @@ Observed outcome:
 - the runtime summary reported `used_execution=true`, `turns=2`,
   `intercepted_requests=1`, and `structured_captures=1`
 
+## Stage 8: Prefilled Structured Prompt Mode
+
+Goal:
+
+- let the runtime inject the opening request prefix before generation so the
+  model only needs to continue the JSON object
+
+Validation:
+
+```bash
+./scripts/stage8_qwen_prefilled_structured_mode.sh
+```
+
+Observed outcome:
+
+- `39` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the real open-source live run returned the final answer `42`
+- the runtime summary reported `used_execution=true`, `turns=2`,
+  `intercepted_requests=1`, `structured_captures=1`, and
+  `runtime_answer_fallbacks=1`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -238,6 +261,8 @@ claims:
    structured-request capture wrapper
 4. the open-source path now also supports a first-class structured prompt mode
    rather than relying exclusively on tagged request wrappers
+5. the open-source path now also supports runtime-prefilled request prefixes
+   that further reduce how much request scaffolding the model must emit
 
 The remaining gap to the article's stronger end state is still the same:
 

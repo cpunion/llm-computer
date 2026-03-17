@@ -83,6 +83,10 @@ Observed status on 2026-03-17:
   model and returned the final answer `42`
 - the built-in structured prompt summary again reported `intercepted_requests=1`
   and `structured_captures=1`
+- the prefilled structured prompt mode also completed a live run with the same
+  model and returned the final answer `42`
+- the prefilled summary reported `intercepted_requests=1`,
+  `structured_captures=1`, and `runtime_answer_fallbacks=1`
 - live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
 - the resulting conclusion is that the open-source runtime path is validated in
@@ -121,4 +125,10 @@ Validated structured-prompt command:
 
 ```bash
 ./scripts/stage7_qwen_structured_prompt_mode.sh
+```
+
+Validated prefilled structured-prompt command:
+
+```bash
+./scripts/stage8_qwen_prefilled_structured_mode.sh
 ```

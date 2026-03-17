@@ -8,6 +8,7 @@ import os
 from typing import Any, Protocol
 
 from llm_computer.integration import OpenSourceRuntimeAdapter
+from llm_computer.protocol import ExecutionResponse
 from llm_computer.service import ExecutionService
 
 
@@ -32,6 +33,7 @@ class GenerationSettings:
     add_generation_prompt: bool = True
     enable_thinking: bool | None = False
     intercept_request_boundary: bool = False
+    request_prefix: str | None = None
 
 
 @dataclass(slots=True)
@@ -51,6 +53,7 @@ class ExecutionConversationResult:
     used_execution: bool
     intercepted_requests: int = 0
     structured_captures: int = 0
+    runtime_answer_fallbacks: int = 0
     turns: list[ExecutionTurn] = field(default_factory=list)
     messages: list[dict[str, str]] = field(default_factory=list)
 
@@ -192,7 +195,8 @@ class TransformersChatRuntime:
 
     def generate(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
         prompt = self.render_prompt(messages, settings)
-        model_inputs = self.tokenizer([prompt], return_tensors="pt")
+        prefix_text = settings.request_prefix or ""
+        model_inputs = self.tokenizer([prompt + prefix_text], return_tensors="pt")
         if hasattr(model_inputs, "to"):
             model_inputs = model_inputs.to(self.device)
 
@@ -232,7 +236,8 @@ class TransformersChatRuntime:
             raise RuntimeError("Request-boundary interception currently supports only deterministic generation")
 
         prompt = self.render_prompt(messages, settings)
-        model_inputs = self.tokenizer([prompt], return_tensors="pt")
+        prefix_text = settings.request_prefix or ""
+        model_inputs = self.tokenizer([prompt + prefix_text], return_tensors="pt")
         if hasattr(model_inputs, "to"):
             model_inputs = model_inputs.to(self.device)
 
@@ -267,7 +272,7 @@ class TransformersChatRuntime:
                 generated_token_ids.append(next_token_id)
                 past_key_values = outputs.past_key_values
 
-                text = self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
+                text = prefix_text + self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
                 canonical_request = OpenSourceRuntimeAdapter.try_extract_request_segment(text)
                 if canonical_request is not None:
                     end_index = text.find(request_end_tag)
@@ -284,7 +289,7 @@ class TransformersChatRuntime:
                         dim=-1,
                     )
 
-        return self.tokenizer.decode(generated_token_ids, skip_special_tokens=True), False
+        return prefix_text + self.tokenizer.decode(generated_token_ids, skip_special_tokens=True), False
 
 
 class QwenExecutionOrchestrator:
@@ -373,6 +378,14 @@ class QwenExecutionOrchestrator:
             {"role": "assistant", "content": "6"},
         ]
 
+    @staticmethod
+    def default_request_prefix(
+        execution_prompt_mode: ExecutionPromptMode,
+    ) -> str:
+        if execution_prompt_mode == ExecutionPromptMode.STRUCTURED:
+            return "{"
+        return f"<{OpenSourceRuntimeAdapter.REQUEST_TAG}>{{"
+
     @classmethod
     def prepare_messages(
         cls,
@@ -398,7 +411,8 @@ class QwenExecutionOrchestrator:
         return (
             "Runtime execution response:\n"
             f"{exec_response}\n\n"
-            "Continue from the runtime result. Do not repeat the execution request verbatim."
+            "The execution request phase is complete. Do not emit another execution request or JSON object. "
+            "Reply only with the final answer implied by the runtime result."
         )
 
     def render_runtime_error(self, error: str) -> str:
@@ -408,6 +422,51 @@ class QwenExecutionOrchestrator:
             "If exact execution is still needed, emit one corrected <exec_request>...</exec_request> block "
             "containing only a valid JSON object. Otherwise answer directly."
         )
+
+    @staticmethod
+    def _extract_exec_response_payload(text: str) -> str | None:
+        start_tag = f"<{OpenSourceRuntimeAdapter.RESPONSE_TAG}>"
+        end_tag = f"</{OpenSourceRuntimeAdapter.RESPONSE_TAG}>"
+        start_index = text.find(start_tag)
+        end_index = text.find(end_tag, start_index + len(start_tag))
+        if start_index < 0 or end_index < 0:
+            return None
+        return text[start_index + len(start_tag) : end_index].strip()
+
+    @classmethod
+    def _parse_exec_response(cls, text: str) -> ExecutionResponse | None:
+        payload = cls._extract_exec_response_payload(text)
+        if payload is None:
+            return None
+        try:
+            return ExecutionResponse.from_json(payload)
+        except Exception:
+            return None
+
+    @staticmethod
+    def _looks_like_request_fragment(text: str) -> bool:
+        stripped = text.strip()
+        if stripped in {"", "}", "]"}:
+            return True
+        if "source_kind" in stripped:
+            return True
+        if stripped.startswith(("{", "\"", "<exec_request>", "[")):
+            return True
+        return False
+
+    @classmethod
+    def _apply_runtime_answer_fallback(
+        cls,
+        assistant_text: str,
+        last_exec_response: ExecutionResponse | None,
+    ) -> tuple[str, bool]:
+        if last_exec_response is None or not last_exec_response.ok:
+            return assistant_text, False
+        if len(last_exec_response.results) != 1:
+            return assistant_text, False
+        if not cls._looks_like_request_fragment(assistant_text):
+            return assistant_text, False
+        return str(last_exec_response.results[0]), True
 
     @staticmethod
     def _runtime_supports_request_interception(runtime: ChatRuntime) -> bool:
@@ -439,6 +498,8 @@ class QwenExecutionOrchestrator:
         used_execution = False
         intercepted_requests = 0
         structured_captures = 0
+        runtime_answer_fallbacks = 0
+        last_exec_response: ExecutionResponse | None = None
 
         for _ in range(max_round_trips):
             assistant_text, intercepted_request, structured_capture = self._generate_assistant_text(
@@ -455,13 +516,17 @@ class QwenExecutionOrchestrator:
                 resolved = self.adapter.maybe_resolve(assistant_text)
             except Exception as exc:
                 if not self.adapter.contains_request_marker(assistant_text):
+                    final_text, fallback_used = self._apply_runtime_answer_fallback(assistant_text, last_exec_response)
+                    if fallback_used:
+                        runtime_answer_fallbacks += 1
                     turns.append(ExecutionTurn(assistant_text=assistant_text))
                     return ExecutionConversationResult(
-                        final_text=assistant_text,
+                        final_text=final_text,
                         stop_reason="assistant_completed",
                         used_execution=used_execution,
                         intercepted_requests=intercepted_requests,
                         structured_captures=structured_captures,
+                        runtime_answer_fallbacks=runtime_answer_fallbacks,
                         turns=turns,
                         messages=conversation,
                     )
@@ -469,18 +534,23 @@ class QwenExecutionOrchestrator:
                 conversation.append({"role": self.response_role, "content": self.render_runtime_error(str(exc))})
                 continue
             if resolved == assistant_text:
+                final_text, fallback_used = self._apply_runtime_answer_fallback(assistant_text, last_exec_response)
+                if fallback_used:
+                    runtime_answer_fallbacks += 1
                 turns.append(ExecutionTurn(assistant_text=assistant_text))
                 return ExecutionConversationResult(
-                    final_text=assistant_text,
+                    final_text=final_text,
                     stop_reason="assistant_completed",
                     used_execution=used_execution,
                     intercepted_requests=intercepted_requests,
                     structured_captures=structured_captures,
+                    runtime_answer_fallbacks=runtime_answer_fallbacks,
                     turns=turns,
                     messages=conversation,
                 )
 
             used_execution = True
+            last_exec_response = self._parse_exec_response(resolved)
             turns.append(ExecutionTurn(assistant_text=assistant_text, exec_response=resolved))
             conversation.append({"role": self.response_role, "content": self.render_runtime_feedback(resolved)})
 
@@ -491,6 +561,7 @@ class QwenExecutionOrchestrator:
             used_execution=used_execution,
             intercepted_requests=intercepted_requests,
             structured_captures=structured_captures,
+            runtime_answer_fallbacks=runtime_answer_fallbacks,
             turns=turns,
             messages=conversation,
         )

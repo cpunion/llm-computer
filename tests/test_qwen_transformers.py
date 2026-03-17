@@ -38,9 +38,11 @@ class FakeInterceptRuntime(FakeRuntime):
         super().__init__(outputs)
         self.intercepted_outputs = intercepted_outputs[:]
         self.intercept_calls: list[list[dict[str, str]]] = []
+        self.intercept_settings: list[GenerationSettings] = []
 
     def generate_until_request_boundary(self, messages: list[dict[str, str]], settings: GenerationSettings) -> tuple[str, bool]:
         self.intercept_calls.append([{"role": message["role"], "content": message["content"]} for message in messages])
+        self.intercept_settings.append(settings)
         if not self.intercepted_outputs:
             raise AssertionError("No more fake intercepted outputs available")
         return self.intercepted_outputs.pop(0)
@@ -164,6 +166,50 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertEqual("42", result.final_text)
         self.assertEqual(1, len(runtime.intercept_calls))
         self.assertEqual(1, len(runtime.calls))
+
+    def test_default_request_prefix_matches_prompt_mode(self) -> None:
+        self.assertEqual("{", QwenExecutionOrchestrator.default_request_prefix(ExecutionPromptMode.STRUCTURED))
+        self.assertEqual("<exec_request>{", QwenExecutionOrchestrator.default_request_prefix(ExecutionPromptMode.TAGGED))
+
+    def test_run_passes_prefilled_request_prefix_to_runtime(self) -> None:
+        runtime = FakeInterceptRuntime(
+            outputs=["42"],
+            intercepted_outputs=[('{"source_kind":"wat","source":"(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))","mode":"auto","trace_limit":1}', True)],
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        result = orchestrator.run(
+            QwenExecutionOrchestrator.prepare_messages(
+                "Compute exactly.",
+                execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+            ),
+            settings=GenerationSettings(
+                intercept_request_boundary=True,
+                request_prefix=QwenExecutionOrchestrator.default_request_prefix(ExecutionPromptMode.STRUCTURED),
+            ),
+        )
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("{", runtime.intercept_settings[0].request_prefix)
+        self.assertEqual(1, result.structured_captures)
+
+    def test_run_uses_runtime_answer_fallback_for_json_fragment(self) -> None:
+        runtime = FakeRuntime(
+            [
+                '{"source_kind":"wat","source":"(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))","mode":"auto","trace_limit":1}',
+                "}",
+            ]
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        result = orchestrator.run(
+            QwenExecutionOrchestrator.prepare_messages(
+                "Compute exactly.",
+                execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+            )
+        )
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("42", result.final_text)
+        self.assertEqual(1, result.runtime_answer_fallbacks)
 
     def test_run_uses_structured_capture_without_closing_tag(self) -> None:
         partial_request = """

@@ -129,6 +129,8 @@ The current example set includes:
   appears,
 - a first-class structured prompt mode for the open-source runtime that removes
   the need to ask the model for tagged execution requests,
+- a prefilled structured mode where the runtime injects the opening request
+  prefix before generation continues,
 - a Gemini closed-source integration that exercises the same sidecar contract
   through explicit tool calls.
 
@@ -143,5 +145,7 @@ Current live-validation status:
   with the same cached Qwen-family model
 - the built-in structured prompt mode has also been validated end-to-end with
   the same cached Qwen-family model
+- the prefilled structured mode has also been validated end-to-end with the same
+  cached Qwen-family model
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

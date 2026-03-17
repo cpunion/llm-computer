@@ -38,12 +38,18 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Stop generation as soon as </exec_request> is emitted and inject the runtime response immediately.",
     )
+    parser.add_argument(
+        "--prefill-request-prefix",
+        action="store_true",
+        help="Let the runtime prefill the opening request prefix before model generation continues.",
+    )
     parser.add_argument("--print-trace", action="store_true", help="Print the full execution conversation as JSON.")
     return parser
 
 
 def main() -> None:
     args = build_parser().parse_args()
+    execution_prompt_mode = ExecutionPromptMode(args.execution_prompt_mode)
     orchestrator = QwenExecutionOrchestrator.from_pretrained(
         model_id=args.model_id,
         device=args.device,
@@ -53,7 +59,7 @@ def main() -> None:
         args.prompt,
         system_prompt=args.system,
         include_protocol_example=args.few_shot_example,
-        execution_prompt_mode=ExecutionPromptMode(args.execution_prompt_mode),
+        execution_prompt_mode=execution_prompt_mode,
     )
     result = orchestrator.run(
         messages,
@@ -64,6 +70,11 @@ def main() -> None:
             top_p=args.top_p,
             enable_thinking=args.enable_thinking,
             intercept_request_boundary=args.intercept_request_boundary,
+            request_prefix=(
+                QwenExecutionOrchestrator.default_request_prefix(execution_prompt_mode)
+                if args.prefill_request_prefix
+                else None
+            ),
         ),
         max_round_trips=args.max_round_trips,
     )
@@ -77,6 +88,7 @@ def main() -> None:
                 "used_execution": result.used_execution,
                 "intercepted_requests": result.intercepted_requests,
                 "structured_captures": result.structured_captures,
+                "runtime_answer_fallbacks": result.runtime_answer_fallbacks,
                 "turns": len(result.turns),
             },
             indent=2,
