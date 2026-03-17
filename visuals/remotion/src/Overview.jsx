@@ -90,7 +90,7 @@ const TitleBlock = ({frame}) => {
       style={{
         position: 'absolute',
         left: 72,
-        top: 54,
+        top: 40,
         transform: `translateY(${interpolate(titleProgress, [0, 1], [18, 0])}px)`,
         opacity: titleProgress,
       }}
@@ -98,12 +98,12 @@ const TitleBlock = ({frame}) => {
       <div
         style={{
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
-          fontSize: 18,
+          fontSize: 16,
           letterSpacing: 4,
           textTransform: 'uppercase',
           color: palette.teal,
           fontWeight: 700,
-          marginBottom: 12,
+          marginBottom: 10,
         }}
       >
         LLM Computer Ladder
@@ -111,11 +111,11 @@ const TitleBlock = ({frame}) => {
       <div
         style={{
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
-          fontSize: 54,
-          lineHeight: 1.05,
+          fontSize: 46,
+          lineHeight: 1.02,
           color: palette.ink,
           fontWeight: 700,
-          maxWidth: 720,
+          maxWidth: 680,
         }}
       >
         Five execution layers,
@@ -124,11 +124,11 @@ const TitleBlock = ({frame}) => {
       </div>
       <div
         style={{
-          marginTop: 18,
-          maxWidth: 760,
+          marginTop: 14,
+          maxWidth: 700,
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
-          fontSize: 22,
-          lineHeight: 1.4,
+          fontSize: 18,
+          lineHeight: 1.32,
           color: palette.subInk,
         }}
       >
@@ -149,7 +149,7 @@ const LadderCard = ({method, index, frame}) => {
     },
   });
   const color = categoryColor[method.category];
-  const y = 190 + index * 88;
+  const y = 210 + index * 66;
   const scale = interpolate(progress, [0, 1], [0.95, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -166,8 +166,8 @@ const LadderCard = ({method, index, frame}) => {
         left: 72,
         top: y,
         width: 620,
-        height: 72,
-        borderRadius: 22,
+        height: 58,
+        borderRadius: 18,
         backgroundColor: 'rgba(255,255,255,0.88)',
         border: `2px solid ${color}`,
         boxShadow: '0 18px 44px rgba(15, 23, 42, 0.08)',
@@ -178,17 +178,17 @@ const LadderCard = ({method, index, frame}) => {
       <div
         style={{
           position: 'absolute',
-          left: 20,
-          top: 16,
-          width: 40,
-          height: 40,
-          borderRadius: 20,
+          left: 18,
+          top: 11,
+          width: 34,
+          height: 34,
+          borderRadius: 17,
           backgroundColor: color,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: 700,
           fontFamily: 'JetBrains Mono, Menlo, monospace',
         }}
@@ -198,9 +198,9 @@ const LadderCard = ({method, index, frame}) => {
       <div
         style={{
           position: 'absolute',
-          left: 76,
-          top: 14,
-          fontSize: 24,
+          left: 66,
+          top: 10,
+          fontSize: 22,
           fontWeight: 700,
           color: palette.ink,
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
@@ -211,10 +211,10 @@ const LadderCard = ({method, index, frame}) => {
       <div
         style={{
           position: 'absolute',
-          left: 76,
-          top: 42,
+          left: 66,
+          top: 34,
           right: 18,
-          fontSize: 14,
+          fontSize: 12,
           color: palette.subInk,
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
         }}
@@ -239,10 +239,10 @@ const LatencyPanel = ({frame}) => {
       style={{
         position: 'absolute',
         right: 72,
-        top: 174,
+        top: 210,
         width: 486,
-        height: 420,
-        borderRadius: 28,
+        height: 320,
+        borderRadius: 24,
         backgroundColor: 'rgba(255,255,255,0.92)',
         border: `2px solid ${palette.line}`,
         boxShadow: '0 18px 44px rgba(15, 23, 42, 0.08)',
@@ -254,8 +254,8 @@ const LatencyPanel = ({frame}) => {
         style={{
           position: 'absolute',
           left: 28,
-          top: 24,
-          fontSize: 26,
+          top: 22,
+          fontSize: 24,
           fontWeight: 700,
           color: palette.ink,
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
@@ -267,8 +267,8 @@ const LatencyPanel = ({frame}) => {
         style={{
           position: 'absolute',
           left: 28,
-          top: 56,
-          fontSize: 16,
+          top: 52,
+          fontSize: 14,
           color: palette.subInk,
           fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
         }}
@@ -276,7 +276,7 @@ const LatencyPanel = ({frame}) => {
         Same final value, very different execution boundaries.
       </div>
       {methods.map((method, index) => {
-        const rowY = 112 + index * 58;
+        const rowY = 100 + index * 44;
         const appear = spring({
           fps: 30,
           frame: frame - 88 - index * 8,
@@ -297,7 +297,7 @@ const LatencyPanel = ({frame}) => {
                 position: 'absolute',
                 left: 28,
                 top: rowY,
-                fontSize: 18,
+                fontSize: 16,
                 color: palette.ink,
                 fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
                 fontWeight: 700,
@@ -311,8 +311,8 @@ const LatencyPanel = ({frame}) => {
                 left: 180,
                 top: rowY - 4,
                 width,
-                height: 30,
-                borderRadius: 14,
+                height: 24,
+                borderRadius: 12,
                 backgroundColor: color,
               }}
             />
@@ -320,8 +320,8 @@ const LatencyPanel = ({frame}) => {
               style={{
                 position: 'absolute',
                 left: 190,
-                top: rowY + 1,
-                fontSize: 14,
+                top: rowY - 1,
+                fontSize: 12,
                 color: 'white',
                 fontFamily: 'JetBrains Mono, Menlo, monospace',
                 fontWeight: 700,
@@ -355,8 +355,8 @@ const CoveragePanel = ({frame}) => {
         position: 'absolute',
         left: 72,
         right: 72,
-        bottom: 56,
-        height: 120,
+        bottom: 28,
+        height: 108,
         display: 'flex',
         gap: 20,
         opacity: appear,
@@ -369,19 +369,20 @@ const CoveragePanel = ({frame}) => {
           style={{
             flex: 1,
             borderRadius: 24,
+            minWidth: 0,
             backgroundColor: palette.paper,
             border: `2px solid ${index === 0 ? palette.warm : index === 1 ? palette.teal : palette.blue}`,
             boxShadow: '0 14px 32px rgba(15, 23, 42, 0.08)',
-            padding: '22px 24px',
+            padding: '18px 20px',
           }}
         >
           <div
             style={{
               fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: 700,
               color: palette.ink,
-              marginBottom: 8,
+              marginBottom: 6,
             }}
           >
             {title}
@@ -389,8 +390,8 @@ const CoveragePanel = ({frame}) => {
           <div
             style={{
               fontFamily: 'Avenir Next, Trebuchet MS, sans-serif',
-              fontSize: 18,
-              lineHeight: 1.35,
+              fontSize: 15,
+              lineHeight: 1.3,
               color: palette.subInk,
             }}
           >
