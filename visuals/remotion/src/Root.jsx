@@ -35,7 +35,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1500}
-        height={1280}
+        height={1480}
       />
       <Composition
         id="five-implementation-paths-figure"
@@ -43,7 +43,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1500}
-        height={1260}
+        height={1480}
       />
       <Composition
         id="five-implementation-latency-figure"
@@ -51,7 +51,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1500}
-        height={980}
+        height={1180}
       />
       <Composition
         id="article-example-results-figure"
@@ -59,7 +59,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1500}
-        height={980}
+        height={1120}
       />
       <Composition
         id="sudoku-prefix-validation-figure"
@@ -67,7 +67,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1500}
-        height={1120}
+        height={1260}
       />
       <Composition
         id="five-implementation-validation-matrix-figure"
@@ -75,7 +75,7 @@ export const RemotionRoot = () => {
         durationInFrames={1}
         fps={30}
         width={1560}
-        height={980}
+        height={1100}
       />
     </>
   );
