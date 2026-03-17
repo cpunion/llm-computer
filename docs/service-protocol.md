@@ -72,3 +72,7 @@ definition:
 
 That allows hosted models to stay in a planner role while exact execution
 remains in the sidecar.
+
+The current Gemini integration uses this same schema by translating it into a
+Gemini `FunctionDeclaration` and then handling the function-response loop
+manually.

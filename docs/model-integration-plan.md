@@ -13,6 +13,9 @@ The chosen baseline open-source stack is documented in
 The current implementation status of the first open-source path is documented in
 `docs/qwen-transformers-integration.md`.
 
+The current implementation status of the first closed-source path is documented
+in `docs/gemini-integration.md`.
+
 The guiding principle is:
 
 - keep the current WASM frontend and trace representation stable,
@@ -53,6 +56,7 @@ Current status:
 
 - the first `Qwen3 + Transformers` scaffold is now implemented
 - it uses the stable sidecar protocol rather than changing model internals yet
+- live checkpoint execution still depends on finishing a local Qwen download
 
 Chosen follow-up path:
 
@@ -187,7 +191,8 @@ Current prototype bridge:
 
 - `ClosedSourceToolAdapter` already exposes the sidecar as a strict tool-style
   interface
-- the remaining work is provider-specific wiring rather than protocol design
+- a Gemini implementation now exercises that same schema through a real
+  `FunctionDeclaration` plus manual function-response loop
 
 This preserves most of the value while avoiding impossible runtime integration
 requirements.
