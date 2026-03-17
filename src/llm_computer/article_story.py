@@ -539,7 +539,7 @@ def render_article_markdown(
         "",
         f"The live comparison was recorded on `{environment['open_source_model']}` for the open-source path, `{environment['closed_source_model']}` for the closed-source path, and `mps` as the device. All five methods returned the same final value `42` on the canonical WASM scenario.",
         "",
-        "![Implementation ladder](assets/five-implementation-ladder.svg)",
+        "![Implementation ladder](assets/five-implementation-ladder.png)",
         "",
         "## Why This Ladder Matters",
         "",
@@ -553,7 +553,7 @@ def render_article_markdown(
         "",
         "The important result is that the repository now exercises all five layers with the same service contract and the same published article examples.",
         "",
-        "![Execution boundaries](assets/five-implementation-paths.svg)",
+        "![Execution boundaries](assets/five-implementation-paths.png)",
         "",
         "## The Five Implementations",
         "",
@@ -585,7 +585,7 @@ def render_article_markdown(
         [
             "## Comparison Snapshot",
             "",
-            "![Latency chart](assets/five-implementation-latency.svg)",
+            "![Latency chart](assets/five-implementation-latency.png)",
             "",
             "| Depth | Method | Category | End-to-end | Used execution | Key runtime signal |",
             "| ---: | --- | --- | ---: | --- | --- |",
@@ -610,7 +610,7 @@ def render_article_markdown(
             "",
             "The original repository already handled toy arithmetic and small compiled-C examples. The next requirement was stronger: validate the examples that the Percepta article actually shows to readers. That changed the quality bar for the project.",
             "",
-            "![Article examples](assets/article-example-results.svg)",
+            "![Article examples](assets/article-example-results.png)",
             "",
             f"The published Hungarian example now succeeds across four local backends with the same result `{article_report['hungarian_expected_cost']}`. The published Sudoku puzzle now succeeds end-to-end under the reference WASM executor with checksum `{sudoku_report['checksum_result']['result']}`.",
             "",
@@ -621,7 +621,7 @@ def render_article_markdown(
             "",
             "That distinction keeps the article honest: the long puzzle is fully solved in the repository, but only the reference path currently completes the entire `22M+` step run as part of the preserved validation artifacts.",
             "",
-            "![Sudoku prefix validation](assets/sudoku-prefix-validation.svg)",
+            "![Sudoku prefix validation](assets/sudoku-prefix-validation.png)",
             "",
             "## What Each Layer Taught Us",
             "",
@@ -633,7 +633,7 @@ def render_article_markdown(
             "",
             "## Validation Matrix",
             "",
-            "![Validation matrix](assets/five-implementation-validation-matrix.svg)",
+            "![Validation matrix](assets/five-implementation-validation-matrix.png)",
             "",
             "## Final Summary",
             "",
@@ -657,10 +657,16 @@ def render_article_markdown(
     return "\n".join(lines) + "\n"
 
 
-def render_remotion_data_js(methods: list[MethodStory]) -> str:
+def render_remotion_data_js(
+    methods: list[MethodStory],
+    article_report: dict[str, object],
+    sudoku_report: dict[str, object],
+) -> str:
     payload = {
         "generated_on": date.today().isoformat(),
         "methods": [method.to_dict() for method in methods],
+        "articleExamples": article_report,
+        "sudokuReport": sudoku_report,
     }
     return "export const articleData = " + json.dumps(payload, indent=2, sort_keys=True) + ";\n"
 
@@ -701,7 +707,7 @@ def main() -> None:
 
     write_text(Path(args.article_output), article)
     generate_assets(Path(args.assets_dir), methods, article_report, sudoku_report)
-    write_text(Path(args.remotion_data_output), render_remotion_data_js(methods))
+    write_text(Path(args.remotion_data_output), render_remotion_data_js(methods, article_report, sudoku_report))
     print(
         json.dumps(
             {

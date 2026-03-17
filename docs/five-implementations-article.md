@@ -18,7 +18,7 @@ We now have five working execution paths in one repository, ordered from the sha
 
 The live comparison was recorded on `Qwen/Qwen2.5-0.5B-Instruct` for the open-source path, `gemini-3-flash-preview` for the closed-source path, and `mps` as the device. All five methods returned the same final value `42` on the canonical WASM scenario.
 
-![Implementation ladder](assets/five-implementation-ladder.svg)
+![Implementation ladder](assets/five-implementation-ladder.png)
 
 ## Why This Ladder Matters
 
@@ -32,7 +32,7 @@ Most discussions about tool use versus in-model execution collapse too many desi
 
 The important result is that the repository now exercises all five layers with the same service contract and the same published article examples.
 
-![Execution boundaries](assets/five-implementation-paths.svg)
+![Execution boundaries](assets/five-implementation-paths.png)
 
 ## The Five Implementations
 
@@ -138,7 +138,7 @@ This is the deepest current integration: open-weight generation stays in the loo
 
 ## Comparison Snapshot
 
-![Latency chart](assets/five-implementation-latency.svg)
+![Latency chart](assets/five-implementation-latency.png)
 
 | Depth | Method | Category | End-to-end | Used execution | Key runtime signal |
 | ---: | --- | --- | ---: | --- | --- |
@@ -152,7 +152,7 @@ This is the deepest current integration: open-weight generation stays in the loo
 
 The original repository already handled toy arithmetic and small compiled-C examples. The next requirement was stronger: validate the examples that the Percepta article actually shows to readers. That changed the quality bar for the project.
 
-![Article examples](assets/article-example-results.svg)
+![Article examples](assets/article-example-results.png)
 
 The published Hungarian example now succeeds across four local backends with the same result `206`. The published Sudoku puzzle now succeeds end-to-end under the reference WASM executor with checksum `1276684605`.
 
@@ -163,7 +163,7 @@ The Sudoku story is especially important because it separates two claims that ar
 
 That distinction keeps the article honest: the long puzzle is fully solved in the repository, but only the reference path currently completes the entire `22M+` step run as part of the preserved validation artifacts.
 
-![Sudoku prefix validation](assets/sudoku-prefix-validation.svg)
+![Sudoku prefix validation](assets/sudoku-prefix-validation.png)
 
 ## What Each Layer Taught Us
 
@@ -175,7 +175,7 @@ That distinction keeps the article honest: the long puzzle is fully solved in th
 
 ## Validation Matrix
 
-![Validation matrix](assets/five-implementation-validation-matrix.svg)
+![Validation matrix](assets/five-implementation-validation-matrix.png)
 
 ## Final Summary
 

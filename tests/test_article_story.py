@@ -6,8 +6,6 @@ from llm_computer.article_story import (
     DOCS_DIR,
     build_method_stories,
     render_article_markdown,
-    render_implementation_ladder_svg,
-    render_latency_svg,
     render_remotion_data_js,
 )
 
@@ -47,19 +45,16 @@ class ArticleStoryTest(unittest.TestCase):
         for method in self.methods:
             self.assertIn(f"### {method.depth_rank}. {method.title}", article)
         self.assertIn("assets/five-implementation-overview.gif", article)
-        self.assertIn("assets/five-implementation-validation-matrix.svg", article)
+        self.assertIn("assets/five-implementation-validation-matrix.png", article)
+        self.assertIn("assets/five-implementation-ladder.png", article)
 
-    def test_svg_and_remotion_outputs_are_well_formed(self) -> None:
-        ladder = render_implementation_ladder_svg(self.methods)
-        latency = render_latency_svg(self.methods)
-        remotion_data = render_remotion_data_js(self.methods)
+    def test_remotion_data_contains_figure_inputs(self) -> None:
+        remotion_data = render_remotion_data_js(self.methods, self.article_examples, self.sudoku)
 
-        self.assertTrue(ladder.startswith('<svg '))
-        self.assertIn("Five Ways We Moved Execution Closer to the Model", ladder)
-        self.assertTrue(latency.startswith('<svg '))
-        self.assertIn("Latency on the Canonical 6 × 7 Scenario", latency)
         self.assertTrue(remotion_data.startswith("export const articleData = "))
         self.assertIn("open_source_execution_block", remotion_data)
+        self.assertIn('"articleExamples"', remotion_data)
+        self.assertIn('"sudokuReport"', remotion_data)
 
 
 if __name__ == "__main__":

@@ -118,8 +118,9 @@ This repository does **not** claim to fully reproduce the original article:
   steps.
 - `docs/model-integration-plan.md`: open-source and closed-source integration
   plans.
-- `docs/assets/`: generated SVG, PNG, GIF, and MP4 assets used by the article.
-- `visuals/remotion/`: Remotion source for the animated article overview.
+- `docs/assets/`: generated PNG, GIF, and MP4 assets used by the article.
+- `visuals/remotion/`: Remotion source for the animated overview plus the
+  CSS-rendered still figures used by the article.
 
 ## Quick start
 
@@ -201,7 +202,8 @@ Current live-validation status:
   reference path at fixed step budgets
 - the transformer path now exposes an explicit execution-layer split between
   feature extraction, transition gating, and append-only writeback
-- the repository now includes a generated long-form article with SVG figures
-  and a Remotion overview animation covering all five implementation layers
+- the repository now includes a generated long-form article with CSS-rendered
+  PNG figures and a Remotion overview animation covering all five
+  implementation layers
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

@@ -1,4 +1,189 @@
 export const articleData = {
+  "articleExamples": {
+    "date": "2026-03-17",
+    "hungarian_expected_cost": 206,
+    "hungarian_matrix": [
+      [
+        61,
+        58,
+        35,
+        86,
+        32,
+        39,
+        41,
+        27,
+        21,
+        42
+      ],
+      [
+        59,
+        77,
+        97,
+        99,
+        78,
+        21,
+        89,
+        72,
+        35,
+        63
+      ],
+      [
+        88,
+        85,
+        37,
+        57,
+        59,
+        97,
+        37,
+        29,
+        69,
+        94
+      ],
+      [
+        32,
+        82,
+        53,
+        20,
+        77,
+        96,
+        21,
+        70,
+        50,
+        61
+      ],
+      [
+        15,
+        44,
+        81,
+        10,
+        64,
+        36,
+        56,
+        78,
+        20,
+        69
+      ],
+      [
+        76,
+        35,
+        87,
+        69,
+        16,
+        55,
+        26,
+        37,
+        30,
+        66
+      ],
+      [
+        86,
+        32,
+        74,
+        94,
+        32,
+        14,
+        24,
+        12,
+        31,
+        70
+      ],
+      [
+        97,
+        63,
+        20,
+        64,
+        90,
+        21,
+        28,
+        49,
+        89,
+        10
+      ],
+      [
+        58,
+        52,
+        27,
+        76,
+        61,
+        35,
+        17,
+        91,
+        37,
+        66
+      ],
+      [
+        42,
+        79,
+        61,
+        26,
+        55,
+        98,
+        70,
+        17,
+        26,
+        86
+      ]
+    ],
+    "results": [
+      {
+        "elapsed_s": 0.0166973750165198,
+        "example_id": "hungarian_10x10",
+        "expected": 206,
+        "mode": "reference",
+        "notes": null,
+        "result": 206,
+        "steps": 17491,
+        "success": true,
+        "transformer_subset": true
+      },
+      {
+        "elapsed_s": 6.305026624992024,
+        "example_id": "hungarian_10x10",
+        "expected": 206,
+        "mode": "append_only_naive",
+        "notes": null,
+        "result": 206,
+        "steps": 17491,
+        "success": true,
+        "transformer_subset": true
+      },
+      {
+        "elapsed_s": 0.4854648329783231,
+        "example_id": "hungarian_10x10",
+        "expected": 206,
+        "mode": "append_only_hull",
+        "notes": null,
+        "result": 206,
+        "steps": 17491,
+        "success": true,
+        "transformer_subset": true
+      },
+      {
+        "elapsed_s": 1.7291006250015926,
+        "example_id": "hungarian_10x10",
+        "expected": 206,
+        "mode": "transformer_hull",
+        "notes": null,
+        "result": 206,
+        "steps": 17491,
+        "success": true,
+        "transformer_subset": true
+      },
+      {
+        "elapsed_s": 26.895499582984485,
+        "example_id": "sudoku_checksum",
+        "expected": 1276684605,
+        "mode": "reference",
+        "notes": null,
+        "result": 1276684605,
+        "steps": 22370167,
+        "success": true,
+        "transformer_subset": true
+      }
+    ],
+    "sudoku_expected_checksum": 1276684605,
+    "sudoku_puzzle": "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+  },
   "generated_on": "2026-03-17",
   "methods": [
     {
@@ -241,5 +426,331 @@ export const articleData = {
         "toy_scenario": true
       }
     }
-  ]
+  ],
+  "sudokuReport": {
+    "checksum_result": {
+      "elapsed_s": 28.032039415993495,
+      "expected": 1276684605,
+      "mode": "reference",
+      "notes": null,
+      "result": 1276684605,
+      "snapshot": {
+        "depth": 1,
+        "ip": 617,
+        "local_nonzero_count": 10,
+        "locals_digest": "0x95b95115d8def3fa",
+        "memory_digest": "0x3ed57b393568137a",
+        "next_instruction": null,
+        "nonzero_memory_bytes": 471,
+        "results": [
+          1276684605
+        ],
+        "stack_digest": "0xb5320a9bbfdaa792",
+        "stack_top": [
+          1276684605
+        ]
+      },
+      "steps": 22370167,
+      "success": true
+    },
+    "date": "2026-03-17",
+    "prefix_budgets": [
+      1000,
+      10000,
+      100000
+    ],
+    "prefix_results": [
+      {
+        "budget": 1000,
+        "elapsed_s": 0.0009725829877424985,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "reference",
+        "notes": null,
+        "result": 3048,
+        "snapshot": {
+          "depth": 1,
+          "ip": 39,
+          "local_nonzero_count": 5,
+          "locals_digest": "0x24702ce7ec5de6ee",
+          "memory_digest": "0xc79a88ac44323de5",
+          "next_instruction": "i32.const 1",
+          "nonzero_memory_bytes": 288,
+          "results": [
+            3048
+          ],
+          "stack_digest": "0x0d78edc70fc2e035",
+          "stack_top": [
+            3048
+          ]
+        },
+        "steps": 1000
+      },
+      {
+        "budget": 1000,
+        "elapsed_s": 0.023617250000825152,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "append_only_naive",
+        "notes": null,
+        "result": 3048,
+        "snapshot": {
+          "depth": 1,
+          "ip": 39,
+          "local_nonzero_count": 5,
+          "locals_digest": "0x24702ce7ec5de6ee",
+          "memory_digest": "0xc79a88ac44323de5",
+          "next_instruction": "i32.const 1",
+          "nonzero_memory_bytes": 288,
+          "results": [
+            3048
+          ],
+          "stack_digest": "0x0d78edc70fc2e035",
+          "stack_top": [
+            3048
+          ]
+        },
+        "steps": 1000
+      },
+      {
+        "budget": 1000,
+        "elapsed_s": 0.015225208015181124,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "append_only_hull",
+        "notes": null,
+        "result": 3048,
+        "snapshot": {
+          "depth": 1,
+          "ip": 39,
+          "local_nonzero_count": 5,
+          "locals_digest": "0x24702ce7ec5de6ee",
+          "memory_digest": "0xc79a88ac44323de5",
+          "next_instruction": "i32.const 1",
+          "nonzero_memory_bytes": 288,
+          "results": [
+            3048
+          ],
+          "stack_digest": "0x0d78edc70fc2e035",
+          "stack_top": [
+            3048
+          ]
+        },
+        "steps": 1000
+      },
+      {
+        "budget": 1000,
+        "elapsed_s": 0.16051083299680613,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "transformer_hull",
+        "notes": null,
+        "result": 3048,
+        "snapshot": {
+          "depth": 1,
+          "ip": 39,
+          "local_nonzero_count": 5,
+          "locals_digest": "0x24702ce7ec5de6ee",
+          "memory_digest": "0xc79a88ac44323de5",
+          "next_instruction": "i32.const 1",
+          "nonzero_memory_bytes": 288,
+          "results": [
+            3048
+          ],
+          "stack_digest": "0x0d78edc70fc2e035",
+          "stack_top": [
+            3048
+          ]
+        },
+        "steps": 1000
+      },
+      {
+        "budget": 10000,
+        "elapsed_s": 0.0101032089733053,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "reference",
+        "notes": null,
+        "result": 2,
+        "snapshot": {
+          "depth": 1,
+          "ip": 248,
+          "local_nonzero_count": 10,
+          "locals_digest": "0x7c4c93cdbbc10d18",
+          "memory_digest": "0x8ca3f17a19579ee1",
+          "next_instruction": "local.set 0",
+          "nonzero_memory_bytes": 395,
+          "results": [
+            2
+          ],
+          "stack_digest": "0x7717980363c8e066",
+          "stack_top": [
+            2
+          ]
+        },
+        "steps": 10000
+      },
+      {
+        "budget": 10000,
+        "elapsed_s": 2.185019291995559,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "append_only_naive",
+        "notes": null,
+        "result": 2,
+        "snapshot": {
+          "depth": 1,
+          "ip": 248,
+          "local_nonzero_count": 10,
+          "locals_digest": "0x7c4c93cdbbc10d18",
+          "memory_digest": "0x8ca3f17a19579ee1",
+          "next_instruction": "local.set 0",
+          "nonzero_memory_bytes": 395,
+          "results": [
+            2
+          ],
+          "stack_digest": "0x7717980363c8e066",
+          "stack_top": [
+            2
+          ]
+        },
+        "steps": 10000
+      },
+      {
+        "budget": 10000,
+        "elapsed_s": 0.24569512499147095,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "append_only_hull",
+        "notes": null,
+        "result": 2,
+        "snapshot": {
+          "depth": 1,
+          "ip": 248,
+          "local_nonzero_count": 10,
+          "locals_digest": "0x7c4c93cdbbc10d18",
+          "memory_digest": "0x8ca3f17a19579ee1",
+          "next_instruction": "local.set 0",
+          "nonzero_memory_bytes": 395,
+          "results": [
+            2
+          ],
+          "stack_digest": "0x7717980363c8e066",
+          "stack_top": [
+            2
+          ]
+        },
+        "steps": 10000
+      },
+      {
+        "budget": 10000,
+        "elapsed_s": 1.824778249982046,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "transformer_hull",
+        "notes": null,
+        "result": 2,
+        "snapshot": {
+          "depth": 1,
+          "ip": 248,
+          "local_nonzero_count": 10,
+          "locals_digest": "0x7c4c93cdbbc10d18",
+          "memory_digest": "0x8ca3f17a19579ee1",
+          "next_instruction": "local.set 0",
+          "nonzero_memory_bytes": 395,
+          "results": [
+            2
+          ],
+          "stack_digest": "0x7717980363c8e066",
+          "stack_top": [
+            2
+          ]
+        },
+        "steps": 10000
+      },
+      {
+        "budget": 100000,
+        "elapsed_s": 0.10164400000940077,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "reference",
+        "notes": null,
+        "result": 4294967295,
+        "snapshot": {
+          "depth": 2,
+          "ip": 241,
+          "local_nonzero_count": 12,
+          "locals_digest": "0x37724f6eece1f0f4",
+          "memory_digest": "0x95b6b7e3ca9832ef",
+          "next_instruction": "i32.xor",
+          "nonzero_memory_bytes": 415,
+          "results": [
+            4294967295
+          ],
+          "stack_digest": "0x536b5e5845081111",
+          "stack_top": [
+            178,
+            4294967295
+          ]
+        },
+        "steps": 100000
+      },
+      {
+        "budget": 100000,
+        "elapsed_s": 3.7364886660070624,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "append_only_hull",
+        "notes": null,
+        "result": 4294967295,
+        "snapshot": {
+          "depth": 2,
+          "ip": 241,
+          "local_nonzero_count": 12,
+          "locals_digest": "0x37724f6eece1f0f4",
+          "memory_digest": "0x95b6b7e3ca9832ef",
+          "next_instruction": "i32.xor",
+          "nonzero_memory_bytes": 415,
+          "results": [
+            4294967295
+          ],
+          "stack_digest": "0x536b5e5845081111",
+          "stack_top": [
+            178,
+            4294967295
+          ]
+        },
+        "steps": 100000
+      },
+      {
+        "budget": 100000,
+        "elapsed_s": 20.440745166997658,
+        "finished": false,
+        "matches_reference": true,
+        "mode": "transformer_hull",
+        "notes": null,
+        "result": 4294967295,
+        "snapshot": {
+          "depth": 2,
+          "ip": 241,
+          "local_nonzero_count": 12,
+          "locals_digest": "0x37724f6eece1f0f4",
+          "memory_digest": "0x95b6b7e3ca9832ef",
+          "next_instruction": "i32.xor",
+          "nonzero_memory_bytes": 415,
+          "results": [
+            4294967295
+          ],
+          "stack_digest": "0x536b5e5845081111",
+          "stack_top": [
+            178,
+            4294967295
+          ]
+        },
+        "steps": 100000
+      }
+    ],
+    "sudoku_expected_checksum": 1276684605,
+    "sudoku_puzzle": "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+  }
 };

@@ -424,8 +424,8 @@ Goal:
 
 - generate an English long-form article that explains the five implementation
   ladder from shallow to deep
-- generate reusable SVG figures plus a Remotion overview animation from the
-  same underlying validation data
+- generate reusable CSS-rendered PNG figures plus a Remotion overview
+  animation from the same underlying validation data
 
 Validation:
 
@@ -438,6 +438,13 @@ Observed outcome:
 - the article is generated at `docs/five-implementations-article.md`
 - the visual asset set is generated under `docs/assets/`
 - the Remotion source lives under `visuals/remotion/`
+- the rendered still figures include:
+  - `docs/assets/five-implementation-ladder.png`
+  - `docs/assets/five-implementation-paths.png`
+  - `docs/assets/five-implementation-latency.png`
+  - `docs/assets/article-example-results.png`
+  - `docs/assets/sudoku-prefix-validation.png`
+  - `docs/assets/five-implementation-validation-matrix.png`
 - the rendered animation outputs are:
   - `docs/assets/five-implementation-overview.png`
   - `docs/assets/five-implementation-overview.mp4`
