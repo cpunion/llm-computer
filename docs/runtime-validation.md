@@ -161,3 +161,26 @@ Observed result:
 - `closed_source_sidecar` completed successfully with `tool_calls=1`
 - the full recorded output is preserved in `docs/five-way-comparison.md` and
   `docs/five-way-comparison.json`
+
+Validated article-example command:
+
+```bash
+./scripts/stage11_article_examples.sh
+```
+
+Observed result:
+
+- all `49` current unit tests passed and `2` were skipped
+- the article's Hungarian `10x10` matching example returned the expected cost
+  `206` under:
+  - the reference interpreter
+  - append-only naive execution
+  - append-only hull execution
+  - transformer-style hull execution
+- the article's Sudoku example returned the independently verified checksum
+  `1276684605` under the reference interpreter
+- the Sudoku reference trace completed in `22,370,167` steps in the recorded
+  run
+- the full recorded output is preserved in
+  `docs/article-example-validation.md` and
+  `docs/article-example-validation.json`

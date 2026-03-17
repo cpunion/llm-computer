@@ -1,0 +1,185 @@
+{
+  "date": "2026-03-17",
+  "hungarian_expected_cost": 206,
+  "hungarian_matrix": [
+    [
+      61,
+      58,
+      35,
+      86,
+      32,
+      39,
+      41,
+      27,
+      21,
+      42
+    ],
+    [
+      59,
+      77,
+      97,
+      99,
+      78,
+      21,
+      89,
+      72,
+      35,
+      63
+    ],
+    [
+      88,
+      85,
+      37,
+      57,
+      59,
+      97,
+      37,
+      29,
+      69,
+      94
+    ],
+    [
+      32,
+      82,
+      53,
+      20,
+      77,
+      96,
+      21,
+      70,
+      50,
+      61
+    ],
+    [
+      15,
+      44,
+      81,
+      10,
+      64,
+      36,
+      56,
+      78,
+      20,
+      69
+    ],
+    [
+      76,
+      35,
+      87,
+      69,
+      16,
+      55,
+      26,
+      37,
+      30,
+      66
+    ],
+    [
+      86,
+      32,
+      74,
+      94,
+      32,
+      14,
+      24,
+      12,
+      31,
+      70
+    ],
+    [
+      97,
+      63,
+      20,
+      64,
+      90,
+      21,
+      28,
+      49,
+      89,
+      10
+    ],
+    [
+      58,
+      52,
+      27,
+      76,
+      61,
+      35,
+      17,
+      91,
+      37,
+      66
+    ],
+    [
+      42,
+      79,
+      61,
+      26,
+      55,
+      98,
+      70,
+      17,
+      26,
+      86
+    ]
+  ],
+  "results": [
+    {
+      "elapsed_s": 0.0166973750165198,
+      "example_id": "hungarian_10x10",
+      "expected": 206,
+      "mode": "reference",
+      "notes": null,
+      "result": 206,
+      "steps": 17491,
+      "success": true,
+      "transformer_subset": true
+    },
+    {
+      "elapsed_s": 6.305026624992024,
+      "example_id": "hungarian_10x10",
+      "expected": 206,
+      "mode": "append_only_naive",
+      "notes": null,
+      "result": 206,
+      "steps": 17491,
+      "success": true,
+      "transformer_subset": true
+    },
+    {
+      "elapsed_s": 0.4854648329783231,
+      "example_id": "hungarian_10x10",
+      "expected": 206,
+      "mode": "append_only_hull",
+      "notes": null,
+      "result": 206,
+      "steps": 17491,
+      "success": true,
+      "transformer_subset": true
+    },
+    {
+      "elapsed_s": 1.7291006250015926,
+      "example_id": "hungarian_10x10",
+      "expected": 206,
+      "mode": "transformer_hull",
+      "notes": null,
+      "result": 206,
+      "steps": 17491,
+      "success": true,
+      "transformer_subset": true
+    },
+    {
+      "elapsed_s": 26.895499582984485,
+      "example_id": "sudoku_checksum",
+      "expected": 1276684605,
+      "mode": "reference",
+      "notes": null,
+      "result": 1276684605,
+      "steps": 22370167,
+      "success": true,
+      "transformer_subset": true
+    }
+  ],
+  "sudoku_expected_checksum": 1276684605,
+  "sudoku_puzzle": "8..........36......7..9.2...5...7.......457.....1...3...1....68..85...1..9....4.."
+}

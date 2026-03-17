@@ -237,6 +237,18 @@ class AppendOnlyWasmExecutor:
                 value = 1 if to_signed_i32(lhs) < to_signed_i32(rhs) else 0
                 self._stack_write(depth_before - 2, step, value)
                 depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_EQ:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = 1 if mask_u32(lhs) == mask_u32(rhs) else 0
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_NE:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = 1 if mask_u32(lhs) != mask_u32(rhs) else 0
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
             elif instruction.opcode == WasmOpcode.I32_GT_S:
                 rhs = self._stack_read(depth_before - 1, step)
                 lhs = self._stack_read(depth_before - 2, step)
@@ -247,6 +259,18 @@ class AppendOnlyWasmExecutor:
                 rhs = self._stack_read(depth_before - 1, step)
                 lhs = self._stack_read(depth_before - 2, step)
                 value = 1 if to_signed_i32(lhs) <= to_signed_i32(rhs) else 0
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_GE_S:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = 1 if to_signed_i32(lhs) >= to_signed_i32(rhs) else 0
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_GE_U:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = 1 if mask_u32(lhs) >= mask_u32(rhs) else 0
                 self._stack_write(depth_before - 2, step, value)
                 depth_after -= 1
             elif instruction.opcode == WasmOpcode.I32_ADD:
@@ -265,6 +289,30 @@ class AppendOnlyWasmExecutor:
                 rhs = self._stack_read(depth_before - 1, step)
                 lhs = self._stack_read(depth_before - 2, step)
                 value = lhs * rhs
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_AND:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = mask_u32(lhs) & mask_u32(rhs)
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_XOR:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = mask_u32(lhs) ^ mask_u32(rhs)
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_SHL:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = mask_u32(lhs) << (mask_u32(rhs) & 31)
+                self._stack_write(depth_before - 2, step, value)
+                depth_after -= 1
+            elif instruction.opcode == WasmOpcode.I32_SHR_U:
+                rhs = self._stack_read(depth_before - 1, step)
+                lhs = self._stack_read(depth_before - 2, step)
+                value = mask_u32(lhs) >> (mask_u32(rhs) & 31)
                 self._stack_write(depth_before - 2, step, value)
                 depth_after -= 1
             elif instruction.opcode == WasmOpcode.I32_EQZ:

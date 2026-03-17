@@ -51,13 +51,21 @@ class WasmOpcode(IntEnum):
     I32_LOAD = 0x28
     I32_STORE = 0x36
     I32_CONST = 0x41
+    I32_EQZ = 0x45
+    I32_EQ = 0x46
+    I32_NE = 0x47
     I32_LT_S = 0x48
     I32_GT_S = 0x4A
     I32_LE_S = 0x4C
-    I32_EQZ = 0x45
+    I32_GE_S = 0x4E
+    I32_GE_U = 0x4F
     I32_ADD = 0x6A
     I32_SUB = 0x6B
     I32_MUL = 0x6C
+    I32_AND = 0x71
+    I32_XOR = 0x73
+    I32_SHL = 0x74
+    I32_SHR_U = 0x76
 
 
 MNEMONICS = {
@@ -76,13 +84,21 @@ MNEMONICS = {
     WasmOpcode.I32_LOAD: "i32.load",
     WasmOpcode.I32_STORE: "i32.store",
     WasmOpcode.I32_CONST: "i32.const",
+    WasmOpcode.I32_EQZ: "i32.eqz",
+    WasmOpcode.I32_EQ: "i32.eq",
+    WasmOpcode.I32_NE: "i32.ne",
     WasmOpcode.I32_LT_S: "i32.lt_s",
     WasmOpcode.I32_GT_S: "i32.gt_s",
     WasmOpcode.I32_LE_S: "i32.le_s",
-    WasmOpcode.I32_EQZ: "i32.eqz",
+    WasmOpcode.I32_GE_S: "i32.ge_s",
+    WasmOpcode.I32_GE_U: "i32.ge_u",
     WasmOpcode.I32_ADD: "i32.add",
     WasmOpcode.I32_SUB: "i32.sub",
     WasmOpcode.I32_MUL: "i32.mul",
+    WasmOpcode.I32_AND: "i32.and",
+    WasmOpcode.I32_XOR: "i32.xor",
+    WasmOpcode.I32_SHL: "i32.shl",
+    WasmOpcode.I32_SHR_U: "i32.shr_u",
 }
 
 
@@ -547,13 +563,21 @@ def _parse_instructions(reader: ByteReader) -> list[WasmInstruction]:
             continue
 
         if opcode in {
+            WasmOpcode.I32_EQ,
+            WasmOpcode.I32_NE,
             WasmOpcode.I32_LT_S,
             WasmOpcode.I32_GT_S,
             WasmOpcode.I32_LE_S,
+            WasmOpcode.I32_GE_S,
+            WasmOpcode.I32_GE_U,
             WasmOpcode.I32_EQZ,
             WasmOpcode.I32_ADD,
             WasmOpcode.I32_SUB,
             WasmOpcode.I32_MUL,
+            WasmOpcode.I32_AND,
+            WasmOpcode.I32_XOR,
+            WasmOpcode.I32_SHL,
+            WasmOpcode.I32_SHR_U,
             WasmOpcode.RETURN,
             WasmOpcode.DROP,
         }:
@@ -686,6 +710,20 @@ class ReferenceWasmExecutor:
                 self._push(value)
                 stack_delta = -1
                 self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_EQ:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = 1 if mask_u32(lhs) == mask_u32(rhs) else 0
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_NE:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = 1 if mask_u32(lhs) != mask_u32(rhs) else 0
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
             elif instruction.opcode == WasmOpcode.I32_GT_S:
                 rhs = self._pop()
                 lhs = self._pop()
@@ -697,6 +735,20 @@ class ReferenceWasmExecutor:
                 rhs = self._pop()
                 lhs = self._pop()
                 value = 1 if to_signed_i32(lhs) <= to_signed_i32(rhs) else 0
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_GE_S:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = 1 if to_signed_i32(lhs) >= to_signed_i32(rhs) else 0
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_GE_U:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = 1 if mask_u32(lhs) >= mask_u32(rhs) else 0
                 self._push(value)
                 stack_delta = -1
                 self.ip += 1
@@ -718,6 +770,34 @@ class ReferenceWasmExecutor:
                 rhs = self._pop()
                 lhs = self._pop()
                 value = lhs * rhs
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_AND:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = mask_u32(lhs) & mask_u32(rhs)
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_XOR:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = mask_u32(lhs) ^ mask_u32(rhs)
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_SHL:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = mask_u32(lhs) << (mask_u32(rhs) & 31)
+                self._push(value)
+                stack_delta = -1
+                self.ip += 1
+            elif instruction.opcode == WasmOpcode.I32_SHR_U:
+                rhs = self._pop()
+                lhs = self._pop()
+                value = mask_u32(lhs) >> (mask_u32(rhs) & 31)
                 self._push(value)
                 stack_delta = -1
                 self.ip += 1

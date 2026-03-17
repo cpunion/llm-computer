@@ -307,6 +307,37 @@ Observed outcome:
   `open_source_wrapper`, while the hosted Gemini sidecar remained the slowest
   end-to-end path
 
+## Stage 11: Article Example Validation
+
+Goal:
+
+- validate the article's published Hungarian and Sudoku examples against the
+  current WASM executor stack
+- preserve a reproducible command and report for later article writing
+
+Validation:
+
+```bash
+./scripts/stage11_article_examples.sh
+```
+
+Observed outcome:
+
+- `49` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the article's Hungarian `10x10` matching example returned the expected cost
+  `206` under:
+  - the reference interpreter
+  - append-only naive execution
+  - append-only hull execution
+  - transformer-style hull execution
+- the article's Sudoku example returned the independently verified checksum
+  `1276684605` under the reference interpreter
+- the recorded Sudoku reference trace finished in `22,370,167` steps
+- the report was written to `docs/article-example-validation.md` and
+  `docs/article-example-validation.json`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -326,6 +357,8 @@ claims:
    removes the `<exec_response>` text round-trip from the execution loop
 7. the repository now has one reproducible five-way matrix that compares the
    exact final target set requested for the article draft
+8. the repository now validates the article's Hungarian and Sudoku examples
+   directly, not only internal toy programs and integration scaffolds
 
 The remaining gap to the article's stronger end state is still the same:
 

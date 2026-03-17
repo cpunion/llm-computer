@@ -25,18 +25,27 @@ SUPPORTED_OPCODES = {
     WasmOpcode.IF,
     WasmOpcode.ELSE,
     WasmOpcode.END,
+    WasmOpcode.DROP,
     WasmOpcode.I32_CONST,
     WasmOpcode.LOCAL_GET,
     WasmOpcode.LOCAL_SET,
     WasmOpcode.LOCAL_TEE,
     WasmOpcode.I32_LOAD,
     WasmOpcode.I32_STORE,
+    WasmOpcode.I32_EQ,
+    WasmOpcode.I32_NE,
     WasmOpcode.I32_LT_S,
     WasmOpcode.I32_GT_S,
     WasmOpcode.I32_LE_S,
+    WasmOpcode.I32_GE_S,
+    WasmOpcode.I32_GE_U,
     WasmOpcode.I32_ADD,
     WasmOpcode.I32_SUB,
     WasmOpcode.I32_MUL,
+    WasmOpcode.I32_AND,
+    WasmOpcode.I32_XOR,
+    WasmOpcode.I32_SHL,
+    WasmOpcode.I32_SHR_U,
     WasmOpcode.I32_EQZ,
     WasmOpcode.BR,
     WasmOpcode.BR_IF,
@@ -237,15 +246,31 @@ class TinyExecutionBlock:
                 writes=writes,
             )
 
-        if instruction.opcode in {WasmOpcode.I32_LT_S, WasmOpcode.I32_GT_S, WasmOpcode.I32_LE_S}:
+        if instruction.opcode in {
+            WasmOpcode.I32_EQ,
+            WasmOpcode.I32_NE,
+            WasmOpcode.I32_LT_S,
+            WasmOpcode.I32_GT_S,
+            WasmOpcode.I32_LE_S,
+            WasmOpcode.I32_GE_S,
+            WasmOpcode.I32_GE_U,
+        }:
             rhs = state.stack_read(depth_before - 1, step)
             lhs = state.stack_read(depth_before - 2, step)
             signed_lhs = to_signed_i32(lhs)
             signed_rhs = to_signed_i32(rhs)
-            if instruction.opcode == WasmOpcode.I32_LT_S:
+            if instruction.opcode == WasmOpcode.I32_EQ:
+                value = 1 if mask_u32(lhs) == mask_u32(rhs) else 0
+            elif instruction.opcode == WasmOpcode.I32_NE:
+                value = 1 if mask_u32(lhs) != mask_u32(rhs) else 0
+            elif instruction.opcode == WasmOpcode.I32_LT_S:
                 value = 1 if signed_lhs < signed_rhs else 0
             elif instruction.opcode == WasmOpcode.I32_GT_S:
                 value = 1 if signed_lhs > signed_rhs else 0
+            elif instruction.opcode == WasmOpcode.I32_GE_S:
+                value = 1 if signed_lhs >= signed_rhs else 0
+            elif instruction.opcode == WasmOpcode.I32_GE_U:
+                value = 1 if mask_u32(lhs) >= mask_u32(rhs) else 0
             else:
                 value = 1 if signed_lhs <= signed_rhs else 0
             return BlockTransition(
@@ -256,15 +281,31 @@ class TinyExecutionBlock:
                 writes=[ExecutionWrite(target="stack", index=depth_before - 2, value=value)],
             )
 
-        if instruction.opcode in {WasmOpcode.I32_ADD, WasmOpcode.I32_SUB, WasmOpcode.I32_MUL}:
+        if instruction.opcode in {
+            WasmOpcode.I32_ADD,
+            WasmOpcode.I32_SUB,
+            WasmOpcode.I32_MUL,
+            WasmOpcode.I32_AND,
+            WasmOpcode.I32_XOR,
+            WasmOpcode.I32_SHL,
+            WasmOpcode.I32_SHR_U,
+        }:
             rhs = state.stack_read(depth_before - 1, step)
             lhs = state.stack_read(depth_before - 2, step)
             if instruction.opcode == WasmOpcode.I32_ADD:
                 value = lhs + rhs
             elif instruction.opcode == WasmOpcode.I32_SUB:
                 value = lhs - rhs
-            else:
+            elif instruction.opcode == WasmOpcode.I32_MUL:
                 value = lhs * rhs
+            elif instruction.opcode == WasmOpcode.I32_AND:
+                value = mask_u32(lhs) & mask_u32(rhs)
+            elif instruction.opcode == WasmOpcode.I32_XOR:
+                value = mask_u32(lhs) ^ mask_u32(rhs)
+            elif instruction.opcode == WasmOpcode.I32_SHR_U:
+                value = mask_u32(lhs) >> (mask_u32(rhs) & 31)
+            else:
+                value = mask_u32(lhs) << (mask_u32(rhs) & 31)
             return BlockTransition(
                 next_ip=next_ip,
                 depth_after=depth_before - 1,
@@ -294,6 +335,10 @@ class TinyExecutionBlock:
             if cond != 0:
                 return BlockTransition(next_ip=target, depth_after=depth_before - 1, value=target, branch_taken=True)
             return BlockTransition(next_ip=next_ip, depth_after=depth_before - 1, value=0, branch_taken=False)
+
+        if instruction.opcode == WasmOpcode.DROP:
+            value = state.stack_read(depth_before - 1, step)
+            return BlockTransition(next_ip=next_ip, depth_after=depth_before - 1, value=value, branch_taken=False)
 
         raise ValueError(f"Unsupported opcode: {instruction.opcode}")
 

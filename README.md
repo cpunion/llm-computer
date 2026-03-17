@@ -57,6 +57,8 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/qwen_cli.py`: `uv run` entry point for Qwen3 validation.
   It also supports cached smaller Qwen-family models for smoke validation and
   request-boundary interception experiments.
+- `src/llm_computer/article_examples.py`: validation harness for the article's
+  Hungarian and Sudoku examples.
 - `src/llm_computer/comparison.py`: unified five-way comparison harness across
   direct, open-source, and closed-source paths.
 - `src/llm_computer/service.py`: execution service boundary over the available
@@ -77,9 +79,15 @@ This repository does **not** claim to fully reproduce the original article:
   prototypes.
 - `tests/test_qwen_transformers.py`: regression tests for the Qwen3
   Transformers orchestration scaffold.
+- `tests/test_article_examples.py`: fast regression coverage for the article's
+  Hungarian and Sudoku examples.
 - `tests/test_comparison.py`: regression tests for the five-way comparison
   harness.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
+- `docs/article-example-validation.md`: validation report for the article's
+  Hungarian and Sudoku examples.
+- `docs/article-example-validation.json`: raw machine-readable article-example
+  validation output.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
 - `docs/five-way-comparison.md`: latest five-way comparison results.
 - `docs/five-way-comparison.json`: raw machine-readable comparison output.
@@ -108,6 +116,7 @@ uv run llm-computer-compare \
   --model-id Qwen/Qwen2.5-0.5B-Instruct \
   --device mps \
   --gemini-model gemini-3-flash-preview
+uv run llm-computer-article-examples
 ```
 
 ## Current status
@@ -164,5 +173,9 @@ Current live-validation status:
 - the unified five-way comparison now succeeds end-to-end across semantic
   control, naive direct execution, open-source wrapper, open-source execution
   block, and closed-source sidecar
+- the article's Hungarian `10x10` matching example now succeeds across the
+  reference, append-only naive, append-only hull, and transformer-hull paths
+- the article's Sudoku example now succeeds under the reference WASM executor
+  with the published puzzle string and an independently verified checksum
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download
