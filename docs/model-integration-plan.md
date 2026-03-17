@@ -13,7 +13,14 @@ The guiding principle is:
 - isolate the execution lane from the general language lane,
 - minimize model changes at first,
 - only move into true in-model execution after the sidecar and runtime paths are
-  validated.
+validated.
+
+Current repository status:
+
+- the sidecar protocol is now implemented in `src/llm_computer/protocol.py`,
+- the execution service boundary is in `src/llm_computer/service.py`,
+- open-source and closed-source adapter prototypes are in
+  `src/llm_computer/integration.py`.
 
 ## Common architecture
 
@@ -44,6 +51,11 @@ Implementation:
 - the runtime sends WASM plus inputs to the sidecar,
 - the sidecar returns structured trace summaries and final outputs.
 
+Status:
+
+- implemented locally through `ExecutionService`
+- request and response schemas are now stable enough for external runtimes
+
 Advantages:
 
 - lowest engineering risk,
@@ -69,6 +81,13 @@ Expected changes:
 - inference engine changes,
 - KV-cache specialization for execution heads,
 - adapter or LoRA-style modifications if needed.
+
+Current prototype bridge:
+
+- `OpenSourceRuntimeAdapter` already models the execution lane as tagged request
+  and response spans
+- the next step is to replace the text-level handoff with runtime interception
+  inside an open-weight inference engine
 
 ### Phase 2: Tiny in-model executor block
 
@@ -124,6 +143,11 @@ Implementation:
 - define trace summaries and error classes,
 - require the model to emit only structured execution commands in execution mode.
 
+Status:
+
+- implemented through `ExecutionRequest` and `ExecutionResponse`
+- mirrored as a tool schema by `ClosedSourceToolAdapter`
+
 ### Phase 2: Planner/executor split
 
 Goal:
@@ -136,6 +160,12 @@ Implementation:
 - planner model writes or selects code,
 - sidecar runs the execution lane,
 - planner model reads back compact state summaries.
+
+Current prototype bridge:
+
+- `ClosedSourceToolAdapter` already exposes the sidecar as a strict tool-style
+  interface
+- the remaining work is provider-specific wiring rather than protocol design
 
 This preserves most of the value while avoiding impossible runtime integration
 requirements.
@@ -170,9 +200,9 @@ Closed-source path:
 
 The immediate engineering sequence should be:
 
-1. Replace the current hand-coded transition block with a more explicit tiny
-   transformer block abstraction.
-2. Define a stable execution request/response schema.
-3. Wrap the current executor as a service boundary.
-4. Prototype one open-source runtime integration against the same schema.
-5. Expand the transformer subset toward more compiled-C patterns.
+1. Replace the tagged open-source adapter with a true runtime interception path.
+2. Attach the closed-source tool adapter to one hosted model API.
+3. Expand the transformer subset toward more compiled-C patterns.
+4. Replace static code retrieval with a more faithful compiled or geometric
+   mechanism.
+5. Move from the sidecar contract toward a tighter in-model execution block.

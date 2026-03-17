@@ -22,8 +22,10 @@ reproduce from the public write-up:
    executor support.
 8. A tiny transformer-style verifier with static code heads and dynamic state
    heads over append-only traces.
-9. An online cache that is closer to long-trace decoding than a static lookup
-   benchmark.
+9. A stable sidecar protocol shared by open-source and closed-source adapter
+   prototypes.
+10. An online cache that is closer to long-trace decoding than a static lookup
+    benchmark.
 
 ## Non-goals
 
@@ -44,13 +46,22 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/examples.py`: small WAT programs compiled to WASM modules.
 - `src/llm_computer/executor.py`: append-only WASM executor, stack/local/memory
   timelines, and benchmarks.
+- `src/llm_computer/protocol.py`: stable request/response schema for sidecar use.
+- `src/llm_computer/service.py`: execution service boundary over the available
+  backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
   restricted control-flow subset.
+- `src/llm_computer/integration.py`: open-source and closed-source adapter
+  prototypes over the service API.
 - `src/llm_computer/__main__.py`: command-line entry point.
 - `tests/test_executor.py`: regression tests for timeline retrieval and
   append-only execution.
+- `tests/test_service.py`: protocol and service routing tests.
+- `tests/test_integration.py`: adapter tests for open-source and closed-source
+  prototypes.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
+- `docs/service-protocol.md`: stable execution contract for sidecars and tools.
 - `docs/transformer-alignment.md`: current transformer-alignment status and next
   steps.
 - `docs/model-integration-plan.md`: open-source and closed-source integration
@@ -81,4 +92,6 @@ The current example set includes:
 - a memory-backed program,
 - a compiled C example that goes through `clang -> wasm32 -> parser -> append-only executor`,
 - a transformer-style verification path that now covers locals, control flow,
-  memory, and one compiled-C example.
+  memory, and one compiled-C example,
+- a sidecar service plus adapter prototypes that keep the execution contract
+  stable across open-source and closed-source integration paths.

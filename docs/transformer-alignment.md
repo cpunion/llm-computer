@@ -23,7 +23,7 @@ to the article:
 - dynamic state heads retrieve the latest writes for `ip`, locals, and stack
   slots from append-only traces,
 - stack depth is reconstructed from append-only deltas,
-- a fixed transition block applies opcode-specific state updates.
+- an explicit tiny execution block applies opcode-specific state updates.
 
 This verifier currently supports:
 
@@ -84,18 +84,22 @@ The restricted subset is enough to make the core architectural point:
 
 - the repository is no longer only a Python dispatcher over append-only state,
 - there is now a separate execution path that is explicitly organized as
-  instruction heads plus state heads plus a transition block,
+  instruction heads plus state heads plus an execution block,
 - correctness can be checked against the same reference WASM executor.
+
+The repository now also exposes this transformer-aligned path through a stable
+service boundary, so the same subset can be exercised by open-source and
+closed-source adapter prototypes without changing the backend contract.
 
 ## Next alignment milestones
 
 The next milestones, in order, are:
 
-1. Extend the transformer-style path to include linear memory.
-2. Replace the hand-coded transition block with a more explicit tiny
-   transformer block abstraction.
-3. Separate static-code retrieval from dynamic-state retrieval at the runtime
+1. Separate static-code retrieval from dynamic-state retrieval at the runtime
    level so that open-source model integration can target them independently.
-4. Expand the transformer subset toward a broader class of compiled C examples.
-5. Replace the static-code linear scan heads with a more faithful geometric or
+2. Expand the transformer subset toward a broader class of compiled C examples.
+3. Replace the static-code linear scan heads with a more faithful geometric or
    compiled retrieval mechanism.
+4. Move from the current service boundary into one real open-weight runtime.
+5. Replace the fixed execution block with compiled transformer weights or a
+   closer attention-only construction.

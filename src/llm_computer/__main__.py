@@ -18,6 +18,9 @@ from llm_computer.executor import (
     online_lookup_benchmark,
     static_lookup_benchmark,
 )
+from llm_computer.integration import ClosedSourceToolAdapter, OpenSourceRuntimeAdapter
+from llm_computer.protocol import ExecutionMode, ExecutionRequest, SourceKind
+from llm_computer.service import ExecutionService
 from llm_computer.transformer import (
     TransformerVerificationBenchmark,
     compare_transformer_to_reference,
@@ -148,6 +151,37 @@ def main() -> None:
             f"  n={length:>5}: online_hull={hull_ms:8.3f} ms, "
             f"naive={naive_ms:8.3f} ms, speedup={speedup:6.2f}x"
         )
+
+    print()
+    print("Service protocol demo")
+    request = ExecutionRequest(
+        source_kind=SourceKind.WAT,
+        source="""
+        (module
+          (func (export "main") (result i32)
+            i32.const 6
+            i32.const 7
+            i32.mul
+          )
+        )
+        """,
+        mode=ExecutionMode.AUTO,
+        trace_limit=2,
+    )
+    service = ExecutionService()
+    response = service.execute(request)
+    print(
+        f"  auto mode -> {response.mode_used.value}, results={response.results}, "
+        f"steps={response.steps}, transformer_subset={response.transformer_subset}"
+    )
+    print(
+        "  open-source request tag: "
+        f"{OpenSourceRuntimeAdapter.render_request_segment(request)}"
+    )
+    print(
+        "  closed-source tool spec keys: "
+        f"{sorted(ClosedSourceToolAdapter.tool_spec()['function']['parameters']['properties'])}"
+    )
 
 
 if __name__ == "__main__":
