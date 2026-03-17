@@ -338,6 +338,36 @@ Observed outcome:
 - the report was written to `docs/article-example-validation.md` and
   `docs/article-example-validation.json`
 
+## Stage 12: Sudoku Result Validation
+
+Goal:
+
+- validate the article's Sudoku example with a dedicated checksum run
+- compare append-only and transformer snapshots against the reference state at
+  fixed step budgets
+
+Validation:
+
+```bash
+./scripts/stage12_sudoku_result_validation.sh
+```
+
+Observed outcome:
+
+- `51` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the full Sudoku checksum matched the independently verified expected value
+  `1276684605` under the reference WASM executor
+- the recorded full checksum run finished in `22,370,167` steps in `28.032 s`
+- prefix-state validation compares the local execution paths against the
+  reference snapshot at `1,000`, `10,000`, and `100,000` steps
+- `append_only_naive` is intentionally capped at `10,000` steps by default,
+  while `append_only_hull` and `transformer_hull` are validated through
+  `100,000` steps
+- the report was written to `docs/sudoku-result-validation.md` and
+  `docs/sudoku-result-validation.json`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -359,6 +389,8 @@ claims:
    exact final target set requested for the article draft
 8. the repository now validates the article's Hungarian and Sudoku examples
    directly, not only internal toy programs and integration scaffolds
+9. the repository now also preserves a dedicated Sudoku result-validation stage
+   that separates full checksum confirmation from prefix-state equivalence
 
 The remaining gap to the article's stronger end state is still the same:
 

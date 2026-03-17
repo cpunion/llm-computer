@@ -184,3 +184,27 @@ Observed result:
 - the full recorded output is preserved in
   `docs/article-example-validation.md` and
   `docs/article-example-validation.json`
+
+Validated Sudoku result-validation command:
+
+```bash
+./scripts/stage12_sudoku_result_validation.sh
+```
+
+Observed result:
+
+- all `51` current unit tests passed and `2` were skipped
+- the full Sudoku checksum matched the independently verified expected value
+  `1276684605` under the reference WASM executor
+- the recorded full checksum run finished in `22,370,167` steps in `28.032 s`
+- prefix-state snapshots matched the reference path at:
+  - `1,000` steps for `append_only_naive`, `append_only_hull`, and
+    `transformer_hull`
+  - `10,000` steps for `append_only_naive`, `append_only_hull`, and
+    `transformer_hull`
+  - `100,000` steps for `append_only_hull` and `transformer_hull`
+- the recorded `100,000`-step prefix timings were `3.736 s` for
+  `append_only_hull` and `20.441 s` for `transformer_hull`
+- the full recorded output is preserved in
+  `docs/sudoku-result-validation.md` and
+  `docs/sudoku-result-validation.json`

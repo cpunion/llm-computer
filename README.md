@@ -59,6 +59,8 @@ This repository does **not** claim to fully reproduce the original article:
   request-boundary interception experiments.
 - `src/llm_computer/article_examples.py`: validation harness for the article's
   Hungarian and Sudoku examples.
+- `src/llm_computer/sudoku_validation.py`: Sudoku-specific checksum and
+  prefix-state validation harness.
 - `src/llm_computer/comparison.py`: unified five-way comparison harness across
   direct, open-source, and closed-source paths.
 - `src/llm_computer/service.py`: execution service boundary over the available
@@ -81,6 +83,8 @@ This repository does **not** claim to fully reproduce the original article:
   Transformers orchestration scaffold.
 - `tests/test_article_examples.py`: fast regression coverage for the article's
   Hungarian and Sudoku examples.
+- `tests/test_sudoku_validation.py`: regression coverage for the Sudoku
+  checksum and prefix-state validation harness.
 - `tests/test_comparison.py`: regression tests for the five-way comparison
   harness.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
@@ -88,6 +92,10 @@ This repository does **not** claim to fully reproduce the original article:
   Hungarian and Sudoku examples.
 - `docs/article-example-validation.json`: raw machine-readable article-example
   validation output.
+- `docs/sudoku-result-validation.md`: full-checksum and prefix-state validation
+  report for the article's Sudoku example.
+- `docs/sudoku-result-validation.json`: raw machine-readable Sudoku validation
+  output.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
 - `docs/five-way-comparison.md`: latest five-way comparison results.
 - `docs/five-way-comparison.json`: raw machine-readable comparison output.
@@ -117,6 +125,7 @@ uv run llm-computer-compare \
   --device mps \
   --gemini-model gemini-3-flash-preview
 uv run llm-computer-article-examples
+uv run llm-computer-sudoku-validate
 ```
 
 ## Current status
@@ -177,5 +186,8 @@ Current live-validation status:
   reference, append-only naive, append-only hull, and transformer-hull paths
 - the article's Sudoku example now succeeds under the reference WASM executor
   with the published puzzle string and an independently verified checksum
+- the article's Sudoku example now also has a dedicated result-validation
+  harness that compares append-only and transformer snapshots against the
+  reference path at fixed step budgets
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

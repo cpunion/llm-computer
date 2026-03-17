@@ -16,6 +16,7 @@ llm-computer-qwen = "llm_computer.qwen_cli:main"
 llm-computer-gemini = "llm_computer.gemini_cli:main"
 llm-computer-compare = "llm_computer.comparison:main"
 llm-computer-article-examples = "llm_computer.article_examples:main"
+llm-computer-sudoku-validate = "llm_computer.sudoku_validation:main"
 
 [project.optional-dependencies]
 transformers = [
