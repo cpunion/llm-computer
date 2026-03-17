@@ -62,8 +62,12 @@ Open-source Qwen validation is recorded in `docs/qwen-transformers-integration.m
 Observed status on 2026-03-17:
 
 - the `Transformers` runtime scaffold itself is implemented and test-covered
-- live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were
+- a live end-to-end open-source run completed with
+  `Qwen/Qwen2.5-0.5B-Instruct` on `mps`
+- the same path emitted a valid `exec_request`, consumed a real
+  `exec_response`, and returned the final answer `42`
+- live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
-- the resulting conclusion is that the open-source runtime code is ready, but
-  live open-weight validation in this session remained blocked by checkpoint
-  fetch throughput
+- the resulting conclusion is that the open-source runtime path is validated in
+  principle, while `Qwen3-8B` specifically remains blocked by checkpoint fetch
+  throughput

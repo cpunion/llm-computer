@@ -56,7 +56,10 @@ Current status:
 
 - the first `Qwen3 + Transformers` scaffold is now implemented
 - it uses the stable sidecar protocol rather than changing model internals yet
-- live checkpoint execution still depends on finishing a local Qwen download
+- the same runtime path has already been exercised end-to-end with a smaller
+  cached Qwen-family model
+- live `Qwen3-8B` checkpoint execution still depends on finishing a local
+  download
 
 Chosen follow-up path:
 

@@ -42,10 +42,26 @@ What completed successfully:
 - optional `transformers` dependencies installed successfully
 - repository tests passed under `uv run`
 - the Qwen runtime scaffold can be imported and invoked locally
+- a full live execution round-trip completed successfully with
+  `Qwen/Qwen2.5-0.5B-Instruct` on the same `Transformers + sidecar` path
+
+Observed successful open-source live run:
+
+- model: `Qwen/Qwen2.5-0.5B-Instruct`
+- device: `mps`
+- mode: few-shot protocol example enabled
+- task: compute `6 * 7`
+- model first emitted:
+  - `<exec_request>{"source_kind":"wat","source":"(module ... i32.const 6 i32.const 7 i32.mul)","mode":"auto","trace_limit":1}</exec_request>`
+- runtime returned an `exec_response` with final result `[42]`
+- model then replied with `42`
+- final orchestrator summary:
+  - `used_execution=true`
+  - `turns=2`
 
 What did not complete in this session:
 
-- a full live generation run from a downloaded Qwen checkpoint
+- a full live generation run from a downloaded `Qwen/Qwen3-8B` checkpoint
 
 Observed blocker:
 
@@ -57,10 +73,12 @@ Observed blocker:
 
 Interpretation:
 
-- the current blocker is checkpoint delivery throughput, not the repository's
-  orchestration logic
-- the open-source runtime path is implemented and testable, but this session
-  does not yet claim a completed end-to-end Qwen generation trace
+- the current blocker for the chosen baseline model is checkpoint delivery
+  throughput, not the repository's orchestration logic
+- the open-source runtime path itself is now validated end-to-end through a real
+  cached Qwen-family model
+- the remaining open-source gap is specifically `Qwen3-8B` live validation, not
+  the generic `Transformers + sidecar` integration
 
 ## What is not implemented yet
 
@@ -94,11 +112,12 @@ This currently installs:
 
 ```bash
 uv run llm-computer-qwen \
-  --model-id Qwen/Qwen3-8B \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
   --device mps \
+  --few-shot-example \
   --max-round-trips 2 \
-  --system 'You are a precise engineering assistant. For exact computation, first emit only one <exec_request>...</exec_request> block. After runtime feedback, answer with the final integer only.' \
-  --prompt 'Compute 6 * 7 exactly. Use execution mode and do not do mental arithmetic.'
+  --system 'Protocol requirement: your first reply must be exactly one <exec_request>...</exec_request> block and nothing else. Inside the tags output one valid JSON object only. Use source_kind="wat", mode="auto", and source containing a complete WAT module. Do not answer directly. Do not use Python. After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
 ```
 
 ## Why this is the right first step

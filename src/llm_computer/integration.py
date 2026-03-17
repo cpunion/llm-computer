@@ -20,10 +20,16 @@ class OpenSourceRuntimeAdapter:
     @classmethod
     def system_prompt(cls) -> str:
         return (
-            "When exact execution is needed, emit exactly one <exec_request>{...}</exec_request> block "
-            "that matches the execution schema. Wait for the runtime to inject an "
-            "<exec_response>{...}</exec_response> block before continuing."
+            "When exact execution is needed, emit exactly one <exec_request>...</exec_request> block. "
+            "Inside the tags, output a single valid JSON object with keys such as "
+            "\"source_kind\", \"source\", \"mode\", and optional \"export_name\". "
+            "Do not add markdown fences, explanations, or surrounding prose inside the tags. "
+            "Wait for the runtime to inject an <exec_response>...</exec_response> block before continuing."
         )
+
+    @classmethod
+    def contains_request(cls, text: str) -> bool:
+        return f"<{cls.REQUEST_TAG}>" in text and f"</{cls.REQUEST_TAG}>" in text
 
     @classmethod
     def render_request_segment(cls, request: ExecutionRequest) -> str:
@@ -33,6 +39,28 @@ class OpenSourceRuntimeAdapter:
     def render_response_segment(cls, response: ExecutionResponse) -> str:
         return f"<{cls.RESPONSE_TAG}>{response.to_json()}</{cls.RESPONSE_TAG}>"
 
+    @staticmethod
+    def _extract_json_object(payload: str) -> str:
+        trimmed = payload.strip()
+        if trimmed.startswith("```"):
+            lines = trimmed.splitlines()
+            if lines and lines[0].startswith("```"):
+                lines = lines[1:]
+            if lines and lines[-1].startswith("```"):
+                lines = lines[:-1]
+            trimmed = "\n".join(lines).strip()
+
+        decoder = json.JSONDecoder()
+        for index, char in enumerate(trimmed):
+            if char != "{":
+                continue
+            try:
+                _, end = decoder.raw_decode(trimmed[index:])
+                return trimmed[index : index + end]
+            except json.JSONDecodeError:
+                continue
+        raise ValueError("Could not extract a valid JSON object from the execution request block")
+
     def maybe_resolve(self, text: str) -> str:
         start_tag = f"<{self.REQUEST_TAG}>"
         end_tag = f"</{self.REQUEST_TAG}>"
@@ -41,7 +69,7 @@ class OpenSourceRuntimeAdapter:
         if start_index < 0 or end_index < 0:
             return text
         payload = text[start_index + len(start_tag) : end_index].strip()
-        request = ExecutionRequest.from_json(payload)
+        request = ExecutionRequest.from_json(self._extract_json_object(payload))
         response = self.service.execute(request)
         return (
             text[:start_index]

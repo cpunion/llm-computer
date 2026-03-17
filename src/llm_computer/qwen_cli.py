@@ -21,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--top-p", type=float, default=None, help="Top-p when sampling is enabled.")
     parser.add_argument("--do-sample", action="store_true", help="Enable sampling.")
     parser.add_argument("--enable-thinking", action="store_true", help="Enable Qwen thinking mode when supported.")
+    parser.add_argument("--few-shot-example", action="store_true", help="Include one protocol demonstration exchange.")
     parser.add_argument("--print-trace", action="store_true", help="Print the full execution conversation as JSON.")
     return parser
 
@@ -32,7 +33,11 @@ def main() -> None:
         device=args.device,
         torch_dtype=args.torch_dtype,
     )
-    messages = QwenExecutionOrchestrator.prepare_messages(args.prompt, system_prompt=args.system)
+    messages = QwenExecutionOrchestrator.prepare_messages(
+        args.prompt,
+        system_prompt=args.system,
+        include_protocol_example=args.few_shot_example,
+    )
     result = orchestrator.run(
         messages,
         settings=GenerationSettings(

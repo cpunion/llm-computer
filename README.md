@@ -55,6 +55,7 @@ This repository does **not** claim to fully reproduce the original article:
   scaffold over the service protocol.
 - `src/llm_computer/gemini_cli.py`: `uv run` entry point for Gemini validation.
 - `src/llm_computer/qwen_cli.py`: `uv run` entry point for Qwen3 validation.
+  It also supports cached smaller Qwen-family models for smoke validation.
 - `src/llm_computer/service.py`: execution service boundary over the available
   backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
@@ -122,5 +123,7 @@ The current example set includes:
 Current live-validation status:
 
 - Gemini has been validated end-to-end through a real tool call
-- Qwen local runtime validation is implemented but the actual checkpoint fetch
-  did not complete within the validation session
+- the open-source `Transformers + sidecar` path has been validated end-to-end
+  with a real cached Qwen-family model
+- `Qwen3-8B` specifically still requires completing the local checkpoint
+  download

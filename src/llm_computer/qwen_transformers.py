@@ -183,7 +183,19 @@ class TransformersChatRuntime:
             if settings.top_p is not None:
                 generate_kwargs["top_p"] = settings.top_p
 
-        generated_ids = self.model.generate(**model_inputs, **generate_kwargs)
+        generation_config = getattr(self.model, "generation_config", None)
+        restore_fields: list[tuple[str, Any]] = []
+        if generation_config is not None and not settings.do_sample:
+            for field_name in ("temperature", "top_p", "top_k"):
+                if hasattr(generation_config, field_name):
+                    restore_fields.append((field_name, getattr(generation_config, field_name)))
+                    setattr(generation_config, field_name, None)
+
+        try:
+            generated_ids = self.model.generate(**model_inputs, **generate_kwargs)
+        finally:
+            for field_name, value in restore_fields:
+                setattr(generation_config, field_name, value)
         input_ids = model_inputs["input_ids"]
         output_ids = generated_ids[0][len(input_ids[0]) :]
         return self.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -236,17 +248,39 @@ class QwenExecutionOrchestrator:
         return f"{base_prompt.strip()}\n\n{runtime_prompt}"
 
     @classmethod
+    def execution_protocol_example(cls) -> list[dict[str, str]]:
+        request = (
+            '<exec_request>{"source_kind":"wat","source":"(module (func (export \\"main\\") '
+            '(result i32) i32.const 2 i32.const 3 i32.mul))","mode":"auto","trace_limit":1}</exec_request>'
+        )
+        response = (
+            '<exec_response>{"ok":true,"mode_requested":"auto","mode_used":"transformer_hull",'
+            '"source_kind":"wat","export_name":"main","results":[6],"steps":4,"elapsed_s":0.001,'
+            '"tokens_per_s":4000.0,"transformer_subset":true,"trace_preview":[],"notes":[],"error":null}'
+            "</exec_response>"
+        )
+        return [
+            {"role": "user", "content": "Compute 2 * 3 exactly."},
+            {"role": "assistant", "content": request},
+            {"role": "user", "content": cls(runtime=DummyChatRuntime()).render_runtime_feedback(response)},
+            {"role": "assistant", "content": "6"},
+        ]
+
+    @classmethod
     def prepare_messages(
         cls,
         user_prompt: str,
         *,
         system_prompt: str | None = None,
         history: list[dict[str, str]] | None = None,
+        include_protocol_example: bool = False,
     ) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = []
         combined = cls.combined_system_prompt(system_prompt)
         if combined:
             messages.append({"role": "system", "content": combined})
+        if include_protocol_example:
+            messages.extend(cls.execution_protocol_example())
         if history:
             messages.extend({"role": message["role"], "content": message["content"]} for message in history)
         messages.append({"role": "user", "content": user_prompt})
@@ -257,6 +291,14 @@ class QwenExecutionOrchestrator:
             "Runtime execution response:\n"
             f"{exec_response}\n\n"
             "Continue from the runtime result. Do not repeat the execution request verbatim."
+        )
+
+    def render_runtime_error(self, error: str) -> str:
+        return (
+            "Runtime parsing error:\n"
+            f"{error}\n\n"
+            "If exact execution is still needed, emit one corrected <exec_request>...</exec_request> block "
+            "containing only a valid JSON object. Otherwise answer directly."
         )
 
     def run(
@@ -274,7 +316,21 @@ class QwenExecutionOrchestrator:
         for _ in range(max_round_trips):
             assistant_text = self.runtime.generate(conversation, settings)
             conversation.append({"role": "assistant", "content": assistant_text})
-            resolved = self.adapter.maybe_resolve(assistant_text)
+            try:
+                resolved = self.adapter.maybe_resolve(assistant_text)
+            except Exception as exc:
+                if not self.adapter.contains_request(assistant_text):
+                    turns.append(ExecutionTurn(assistant_text=assistant_text))
+                    return ExecutionConversationResult(
+                        final_text=assistant_text,
+                        stop_reason="assistant_completed",
+                        used_execution=used_execution,
+                        turns=turns,
+                        messages=conversation,
+                    )
+                turns.append(ExecutionTurn(assistant_text=assistant_text))
+                conversation.append({"role": self.response_role, "content": self.render_runtime_error(str(exc))})
+                continue
             if resolved == assistant_text:
                 turns.append(ExecutionTurn(assistant_text=assistant_text))
                 return ExecutionConversationResult(
@@ -297,3 +353,10 @@ class QwenExecutionOrchestrator:
             turns=turns,
             messages=conversation,
         )
+
+
+class DummyChatRuntime:
+    """Placeholder runtime for class-level prompt helpers."""
+
+    def generate(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
+        raise NotImplementedError

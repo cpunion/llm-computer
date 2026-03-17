@@ -40,8 +40,19 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         )
         self.assertEqual("system", messages[0]["role"])
         self.assertIn("You are a precise assistant.", messages[0]["content"])
-        self.assertIn("<exec_request>{...}</exec_request>", messages[0]["content"])
+        self.assertIn("<exec_request>...</exec_request>", messages[0]["content"])
+        self.assertIn("Do not add markdown fences", messages[0]["content"])
         self.assertEqual("user", messages[1]["role"])
+
+    def test_prepare_messages_can_include_protocol_example(self) -> None:
+        messages = QwenExecutionOrchestrator.prepare_messages(
+            "Compute exactly.",
+            include_protocol_example=True,
+        )
+        self.assertEqual("system", messages[0]["role"])
+        self.assertIn("<exec_request>", messages[2]["content"])
+        self.assertIn("<exec_response>", messages[3]["content"])
+        self.assertEqual("6", messages[4]["content"])
 
     def test_run_handles_execution_round_trip(self) -> None:
         runtime = FakeRuntime(
@@ -71,6 +82,22 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertFalse(result.used_execution)
         self.assertEqual("assistant_completed", result.stop_reason)
         self.assertEqual("No exact execution was needed.", result.final_text)
+
+    def test_run_recovers_from_malformed_execution_request(self) -> None:
+        runtime = FakeRuntime(
+            [
+                "<exec_request>not json</exec_request>",
+                SUPPORTED_WAT_REQUEST,
+                "42",
+            ]
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        result = orchestrator.run(QwenExecutionOrchestrator.prepare_messages("Compute exactly."), max_round_trips=3)
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("assistant_completed", result.stop_reason)
+        self.assertEqual("42", result.final_text)
+        self.assertIn("Runtime parsing error:", runtime.calls[1][-1]["content"])
 
     def test_from_pretrained_requires_optional_dependencies(self) -> None:
         if transformers_available():
