@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from llm_computer.qwen_transformers import (
+    ExecutionPromptMode,
     GenerationSettings,
     QwenExecutionOrchestrator,
     TransformersChatRuntime,
@@ -67,6 +68,20 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertIn("<exec_response>", messages[3]["content"])
         self.assertEqual("6", messages[4]["content"])
 
+    def test_prepare_messages_supports_structured_prompt_mode(self) -> None:
+        messages = QwenExecutionOrchestrator.prepare_messages(
+            "Compute exactly.",
+            include_protocol_example=True,
+            execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+        )
+        self.assertEqual("system", messages[0]["role"])
+        self.assertIn("emit exactly one valid JSON object", messages[0]["content"])
+        self.assertNotIn("<exec_request>...</exec_request>", messages[0]["content"])
+        self.assertTrue(messages[2]["content"].strip().startswith("{"))
+        self.assertIn("\"source_kind\":\"wat\"", messages[2]["content"])
+        self.assertIn("<exec_response>", messages[3]["content"])
+        self.assertEqual("6", messages[4]["content"])
+
     def test_run_handles_execution_round_trip(self) -> None:
         runtime = FakeRuntime(
             [
@@ -86,6 +101,26 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertEqual(2, len(runtime.calls))
         self.assertIn("Runtime execution response:", runtime.calls[1][-1]["content"])
         self.assertIn("[42]", runtime.calls[1][-1]["content"])
+
+    def test_run_handles_structured_execution_round_trip(self) -> None:
+        runtime = FakeRuntime(
+            [
+                '{"source_kind":"wat","source":"(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))","mode":"auto","trace_limit":1}',
+                "42",
+            ]
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        messages = QwenExecutionOrchestrator.prepare_messages(
+            "What is 6 * 7?",
+            execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+        )
+        result = orchestrator.run(messages)
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("assistant_completed", result.stop_reason)
+        self.assertEqual("42", result.final_text)
+        self.assertEqual(2, len(result.turns))
+        self.assertIn("<exec_response>", result.turns[0].exec_response or "")
 
     def test_run_stops_without_execution(self) -> None:
         runtime = FakeRuntime(["No exact execution was needed."])

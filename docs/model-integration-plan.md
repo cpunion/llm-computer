@@ -63,6 +63,8 @@ Current status:
 - the same open-source path now also supports structured request capture before
   `</exec_request>` and has been exercised end-to-end with the same cached
   Qwen-family model
+- the open-source path now also has a first-class structured prompt mode and
+  has been exercised end-to-end with the same cached Qwen-family model
 - live `Qwen3-8B` checkpoint execution still depends on finishing a local
   download
 
@@ -125,6 +127,8 @@ Current prototype bridge:
 - `OpenSourceRuntimeAdapter` and `TransformersChatRuntime` now also support
   structured request capture when a valid execution JSON object is complete even
   before the closing tag has appeared
+- `QwenExecutionOrchestrator` now also exposes a structured prompt mode that
+  avoids asking the model for tagged request wrappers in the first place
 - the next step is to replace this wrapper-level interception with deeper
   runtime interception inside an open-weight inference engine
 

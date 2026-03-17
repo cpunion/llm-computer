@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 import os
 from typing import Any, Protocol
 
@@ -11,6 +12,13 @@ from llm_computer.service import ExecutionService
 
 
 DEFAULT_QWEN_MODEL_ID = "Qwen/Qwen3-8B"
+
+
+class ExecutionPromptMode(str, Enum):
+    """Prompt protocol exposed to the open-source runtime."""
+
+    TAGGED = "tagged"
+    STRUCTURED = "structured"
 
 
 @dataclass(slots=True)
@@ -319,17 +327,38 @@ class QwenExecutionOrchestrator:
         return cls(runtime=runtime, service=service, response_role=response_role)
 
     @staticmethod
-    def combined_system_prompt(base_prompt: str | None = None) -> str:
-        runtime_prompt = OpenSourceRuntimeAdapter.system_prompt()
+    def combined_system_prompt(
+        base_prompt: str | None = None,
+        *,
+        execution_prompt_mode: ExecutionPromptMode = ExecutionPromptMode.TAGGED,
+    ) -> str:
+        if execution_prompt_mode == ExecutionPromptMode.STRUCTURED:
+            runtime_prompt = (
+                "When exact execution is needed, emit exactly one valid JSON object and nothing else. "
+                "Use keys such as \"source_kind\", \"source\", \"mode\", and optional \"export_name\". "
+                "Do not add markdown fences, explanations, or surrounding prose. "
+                "Wait for the runtime to inject an <exec_response>...</exec_response> block before continuing."
+            )
+        else:
+            runtime_prompt = OpenSourceRuntimeAdapter.system_prompt()
         if base_prompt is None or not base_prompt.strip():
             return runtime_prompt
         return f"{base_prompt.strip()}\n\n{runtime_prompt}"
 
     @classmethod
-    def execution_protocol_example(cls) -> list[dict[str, str]]:
+    def execution_protocol_example(
+        cls,
+        *,
+        execution_prompt_mode: ExecutionPromptMode = ExecutionPromptMode.TAGGED,
+    ) -> list[dict[str, str]]:
+        request_json = (
+            '{"source_kind":"wat","source":"(module (func (export \\"main\\") '
+            '(result i32) i32.const 2 i32.const 3 i32.mul))","mode":"auto","trace_limit":1}'
+        )
         request = (
-            '<exec_request>{"source_kind":"wat","source":"(module (func (export \\"main\\") '
-            '(result i32) i32.const 2 i32.const 3 i32.mul))","mode":"auto","trace_limit":1}</exec_request>'
+            request_json
+            if execution_prompt_mode == ExecutionPromptMode.STRUCTURED
+            else f"<exec_request>{request_json}</exec_request>"
         )
         response = (
             '<exec_response>{"ok":true,"mode_requested":"auto","mode_used":"transformer_hull",'
@@ -352,13 +381,14 @@ class QwenExecutionOrchestrator:
         system_prompt: str | None = None,
         history: list[dict[str, str]] | None = None,
         include_protocol_example: bool = False,
+        execution_prompt_mode: ExecutionPromptMode = ExecutionPromptMode.TAGGED,
     ) -> list[dict[str, str]]:
         messages: list[dict[str, str]] = []
-        combined = cls.combined_system_prompt(system_prompt)
+        combined = cls.combined_system_prompt(system_prompt, execution_prompt_mode=execution_prompt_mode)
         if combined:
             messages.append({"role": "system", "content": combined})
         if include_protocol_example:
-            messages.extend(cls.execution_protocol_example())
+            messages.extend(cls.execution_protocol_example(execution_prompt_mode=execution_prompt_mode))
         if history:
             messages.extend({"role": message["role"], "content": message["content"]} for message in history)
         messages.append({"role": "user", "content": user_prompt})

@@ -64,6 +64,8 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/integration.py`: open-source and closed-source adapter
   prototypes over the service API.
 - `src/llm_computer/__main__.py`: command-line entry point.
+- `scripts/`: stage-by-stage validation scripts that preserve the commands used
+  to verify each implementation milestone.
 - `tests/test_executor.py`: regression tests for timeline retrieval and
   append-only execution.
 - `tests/test_service.py`: protocol and service routing tests.
@@ -125,6 +127,8 @@ The current example set includes:
 - a deeper structured-request capture mode for the open-source runtime that can
   canonicalize a complete execution JSON object even before the closing tag
   appears,
+- a first-class structured prompt mode for the open-source runtime that removes
+  the need to ask the model for tagged execution requests,
 - a Gemini closed-source integration that exercises the same sidecar contract
   through explicit tool calls.
 
@@ -137,5 +141,7 @@ Current live-validation status:
   end-to-end with the same cached Qwen-family model
 - the deeper structured-request capture mode has also been validated end-to-end
   with the same cached Qwen-family model
+- the built-in structured prompt mode has also been validated end-to-end with
+  the same cached Qwen-family model
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

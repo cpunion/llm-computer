@@ -5,7 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 
-from llm_computer.qwen_transformers import DEFAULT_QWEN_MODEL_ID, GenerationSettings, QwenExecutionOrchestrator
+from llm_computer.qwen_transformers import (
+    DEFAULT_QWEN_MODEL_ID,
+    ExecutionPromptMode,
+    GenerationSettings,
+    QwenExecutionOrchestrator,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +27,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--do-sample", action="store_true", help="Enable sampling.")
     parser.add_argument("--enable-thinking", action="store_true", help="Enable Qwen thinking mode when supported.")
     parser.add_argument("--few-shot-example", action="store_true", help="Include one protocol demonstration exchange.")
+    parser.add_argument(
+        "--execution-prompt-mode",
+        default=ExecutionPromptMode.TAGGED.value,
+        choices=[mode.value for mode in ExecutionPromptMode],
+        help="Execution request protocol exposed to the model.",
+    )
     parser.add_argument(
         "--intercept-request-boundary",
         action="store_true",
@@ -42,6 +53,7 @@ def main() -> None:
         args.prompt,
         system_prompt=args.system,
         include_protocol_example=args.few_shot_example,
+        execution_prompt_mode=ExecutionPromptMode(args.execution_prompt_mode),
     )
     result = orchestrator.run(
         messages,

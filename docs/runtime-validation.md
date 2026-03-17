@@ -79,6 +79,10 @@ Observed status on 2026-03-17:
   model and returned the final answer `42`
 - the structured summary reported `intercepted_requests=1` and
   `structured_captures=1`
+- the built-in structured prompt mode also completed a live run with the same
+  model and returned the final answer `42`
+- the built-in structured prompt summary again reported `intercepted_requests=1`
+  and `structured_captures=1`
 - live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
 - the resulting conclusion is that the open-source runtime path is validated in
@@ -111,4 +115,10 @@ uv run llm-computer-qwen \
   --max-new-tokens 128 \
   --system 'Protocol requirement: do not answer directly. Your first reply must begin with <exec_request> and then contain exactly one valid JSON object. Stop immediately after the JSON object and do not emit </exec_request>. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
+```
+
+Validated structured-prompt command:
+
+```bash
+./scripts/stage7_qwen_structured_prompt_mode.sh
 ```

@@ -5,6 +5,8 @@ Date: 2026-03-17
 This document records the repository's staged implementation progress together
 with the validation commands and observed outcomes used at each stage.
 
+Reusable scripts for these stages are kept under `scripts/`.
+
 ## Stage 0: Semantic Core
 
 Goal:
@@ -201,6 +203,28 @@ Observed outcome:
 - the runtime summary reported `used_execution=true`, `turns=2`,
   `intercepted_requests=1`, and `structured_captures=1`
 
+## Stage 7: Structured Prompt Mode
+
+Goal:
+
+- stop asking the model for tagged request wrappers and make structured JSON
+  emission a first-class open-source prompt mode
+
+Validation:
+
+```bash
+./scripts/stage7_qwen_structured_prompt_mode.sh
+```
+
+Observed outcome:
+
+- `36` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the real open-source live run returned the final answer `42`
+- the runtime summary reported `used_execution=true`, `turns=2`,
+  `intercepted_requests=1`, and `structured_captures=1`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -212,6 +236,8 @@ claims:
 3. the open-source path can now be driven through plain sidecar round trips,
    through a request-boundary interception wrapper, and through a deeper
    structured-request capture wrapper
+4. the open-source path now also supports a first-class structured prompt mode
+   rather than relying exclusively on tagged request wrappers
 
 The remaining gap to the article's stronger end state is still the same:
 
