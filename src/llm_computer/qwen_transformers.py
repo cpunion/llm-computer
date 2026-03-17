@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import os
 from typing import Any, Protocol
 
 from llm_computer.integration import OpenSourceRuntimeAdapter
@@ -21,6 +22,7 @@ class GenerationSettings:
     temperature: float = 0.0
     top_p: float | None = None
     add_generation_prompt: bool = True
+    enable_thinking: bool | None = False
 
 
 @dataclass(slots=True)
@@ -65,18 +67,49 @@ def _require_transformers() -> tuple[Any, Any, Any]:
     except ImportError as exc:  # pragma: no cover - exercised in unit tests
         raise RuntimeError(
             "Qwen3 Transformers integration requires optional dependencies. "
-            "Install them with: pip install -e .[transformers]"
+            "Install them with: uv sync --extra transformers"
         ) from exc
     return torch, AutoModelForCausalLM, AutoTokenizer
+
+
+def resolve_device(requested_device: str = "auto") -> str:
+    """Chooses a practical runtime device for local Transformers execution."""
+
+    torch, _, _ = _require_transformers()
+
+    if requested_device == "auto":
+        if hasattr(torch, "cuda") and torch.cuda.is_available():
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+        return "cpu"
+
+    if requested_device == "cuda" and not (hasattr(torch, "cuda") and torch.cuda.is_available()):
+        raise RuntimeError("CUDA was requested but is not available")
+    if requested_device == "mps" and not (hasattr(torch.backends, "mps") and torch.backends.mps.is_available()):
+        raise RuntimeError("MPS was requested but is not available")
+    return requested_device
+
+
+def resolve_torch_dtype(torch_dtype: str | Any, device: str) -> str | Any:
+    """Resolves a stable dtype choice for the requested runtime device."""
+
+    torch, _, _ = _require_transformers()
+    if torch_dtype != "auto":
+        return getattr(torch, torch_dtype, torch_dtype) if isinstance(torch_dtype, str) else torch_dtype
+    if device == "mps":
+        return torch.float16
+    return torch_dtype
 
 
 class TransformersChatRuntime:
     """A minimal chat runtime around AutoTokenizer and AutoModelForCausalLM."""
 
-    def __init__(self, tokenizer: Any, model: Any, model_id: str) -> None:
+    def __init__(self, tokenizer: Any, model: Any, model_id: str, device: str) -> None:
         self.tokenizer = tokenizer
         self.model = model
         self.model_id = model_id
+        self.device = device
 
     @classmethod
     def from_pretrained(
@@ -84,27 +117,48 @@ class TransformersChatRuntime:
         model_id: str = DEFAULT_QWEN_MODEL_ID,
         *,
         torch_dtype: str | Any = "auto",
+        device: str = "auto",
         device_map: str | dict[str, int | str] = "auto",
+        use_device_map: bool | None = None,
         tokenizer_kwargs: dict[str, Any] | None = None,
         model_kwargs: dict[str, Any] | None = None,
     ) -> "TransformersChatRuntime":
         _, auto_model, auto_tokenizer = _require_transformers()
+        resolved_device = resolve_device(device)
+        resolved_dtype = resolve_torch_dtype(torch_dtype, resolved_device)
+        load_with_device_map = use_device_map if use_device_map is not None else (resolved_device == "cuda")
+
+        if resolved_device == "mps":
+            os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
         tokenizer = auto_tokenizer.from_pretrained(model_id, **(tokenizer_kwargs or {}))
-        model = auto_model.from_pretrained(
-            model_id,
-            torch_dtype=torch_dtype,
-            device_map=device_map,
-            **(model_kwargs or {}),
-        )
-        return cls(tokenizer=tokenizer, model=model, model_id=model_id)
+        final_model_kwargs = {"low_cpu_mem_usage": True}
+        if model_kwargs:
+            final_model_kwargs.update(model_kwargs)
+        if load_with_device_map:
+            final_model_kwargs["device_map"] = device_map
+        try:
+            model = auto_model.from_pretrained(model_id, dtype=resolved_dtype, **final_model_kwargs)
+        except TypeError:
+            model = auto_model.from_pretrained(model_id, torch_dtype=resolved_dtype, **final_model_kwargs)
+        model.eval()
+        if not load_with_device_map and resolved_device != "cpu":
+            model.to(resolved_device)
+        return cls(tokenizer=tokenizer, model=model, model_id=model_id, device=resolved_device)
 
     def render_prompt(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
         if hasattr(self.tokenizer, "apply_chat_template"):
-            return self.tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=settings.add_generation_prompt,
-            )
+            kwargs: dict[str, Any] = {
+                "tokenize": False,
+                "add_generation_prompt": settings.add_generation_prompt,
+            }
+            if settings.enable_thinking is not None:
+                kwargs["enable_thinking"] = settings.enable_thinking
+            try:
+                return self.tokenizer.apply_chat_template(messages, **kwargs)
+            except TypeError:
+                kwargs.pop("enable_thinking", None)
+                return self.tokenizer.apply_chat_template(messages, **kwargs)
 
         lines: list[str] = []
         for message in messages:
@@ -117,8 +171,8 @@ class TransformersChatRuntime:
     def generate(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
         prompt = self.render_prompt(messages, settings)
         model_inputs = self.tokenizer([prompt], return_tensors="pt")
-        if hasattr(model_inputs, "to") and hasattr(self.model, "device"):
-            model_inputs = model_inputs.to(self.model.device)
+        if hasattr(model_inputs, "to"):
+            model_inputs = model_inputs.to(self.device)
 
         generate_kwargs: dict[str, Any] = {
             "max_new_tokens": settings.max_new_tokens,
@@ -157,14 +211,18 @@ class QwenExecutionOrchestrator:
         service: ExecutionService | None = None,
         response_role: str = "user",
         torch_dtype: str | Any = "auto",
+        device: str = "auto",
         device_map: str | dict[str, int | str] = "auto",
+        use_device_map: bool | None = None,
         tokenizer_kwargs: dict[str, Any] | None = None,
         model_kwargs: dict[str, Any] | None = None,
     ) -> "QwenExecutionOrchestrator":
         runtime = TransformersChatRuntime.from_pretrained(
             model_id=model_id,
             torch_dtype=torch_dtype,
+            device=device,
             device_map=device_map,
+            use_device_map=use_device_map,
             tokenizer_kwargs=tokenizer_kwargs,
             model_kwargs=model_kwargs,
         )

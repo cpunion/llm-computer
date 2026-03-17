@@ -10,11 +10,20 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.scripts]
+llm-computer = "llm_computer.__main__:main"
+llm-computer-qwen = "llm_computer.qwen_cli:main"
+llm-computer-gemini = "llm_computer.gemini_cli:main"
+
 [project.optional-dependencies]
 transformers = [
     "accelerate>=0.30.0",
     "torch>=2.2.0",
     "transformers>=4.51.0",
+]
+gemini = [
+    "google-genai>=1.0.0",
+    "python-dotenv>=1.0.1",
 ]
 
 [tool.setuptools]

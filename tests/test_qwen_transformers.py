@@ -3,7 +3,6 @@ from __future__ import annotations
 import unittest
 
 from llm_computer.qwen_transformers import (
-    ExecutionConversationResult,
     GenerationSettings,
     QwenExecutionOrchestrator,
     TransformersChatRuntime,
@@ -76,7 +75,7 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
     def test_from_pretrained_requires_optional_dependencies(self) -> None:
         if transformers_available():
             self.skipTest("Transformers dependencies are installed in this environment")
-        with self.assertRaisesRegex(RuntimeError, "pip install -e \\.\\[transformers\\]"):
+        with self.assertRaisesRegex(RuntimeError, "uv sync --extra transformers"):
             TransformersChatRuntime.from_pretrained()
 
 
