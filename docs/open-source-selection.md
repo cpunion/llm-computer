@@ -9,6 +9,12 @@ The primary open-source integration target is:
 - model: `Qwen3-8B`
 - framework: `Hugging Face Transformers`
 
+Current implementation status:
+
+- a first integration scaffold now exists in
+  `src/llm_computer/qwen_transformers.py`
+- details are documented in `docs/qwen-transformers-integration.md`
+
 The planned scale-up path is:
 
 1. `Qwen3-8B + Transformers`

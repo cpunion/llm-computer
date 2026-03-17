@@ -10,6 +10,9 @@ integrated with open-source transformer models and with closed-source LLM APIs.
 The chosen baseline open-source stack is documented in
 `docs/open-source-selection.md`.
 
+The current implementation status of the first open-source path is documented in
+`docs/qwen-transformers-integration.md`.
+
 The guiding principle is:
 
 - keep the current WASM frontend and trace representation stable,
@@ -45,6 +48,11 @@ Chosen starting point:
 
 - model: `Qwen3-8B`
 - runtime: `Transformers`
+
+Current status:
+
+- the first `Qwen3 + Transformers` scaffold is now implemented
+- it uses the stable sidecar protocol rather than changing model internals yet
 
 Chosen follow-up path:
 

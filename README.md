@@ -24,7 +24,9 @@ reproduce from the public write-up:
    heads over append-only traces.
 9. A stable sidecar protocol shared by open-source and closed-source adapter
    prototypes.
-10. An online cache that is closer to long-trace decoding than a static lookup
+10. A Qwen3 plus Transformers integration scaffold over the stable sidecar
+    protocol.
+11. An online cache that is closer to long-trace decoding than a static lookup
     benchmark.
 
 ## Non-goals
@@ -47,6 +49,8 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/executor.py`: append-only WASM executor, stack/local/memory
   timelines, and benchmarks.
 - `src/llm_computer/protocol.py`: stable request/response schema for sidecar use.
+- `src/llm_computer/qwen_transformers.py`: Qwen3 plus Transformers integration
+  scaffold over the service protocol.
 - `src/llm_computer/service.py`: execution service boundary over the available
   backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
@@ -59,10 +63,14 @@ This repository does **not** claim to fully reproduce the original article:
 - `tests/test_service.py`: protocol and service routing tests.
 - `tests/test_integration.py`: adapter tests for open-source and closed-source
   prototypes.
+- `tests/test_qwen_transformers.py`: regression tests for the Qwen3
+  Transformers orchestration scaffold.
 - `tests/test_transformer.py`: regression tests for the transformer subset.
 - `docs/benchmark-results.md`: measured results and article-alignment notes.
 - `docs/open-source-selection.md`: chosen open-source model and runtime
   baseline.
+- `docs/qwen-transformers-integration.md`: current Qwen3 plus Transformers
+  integration status and next steps.
 - `docs/service-protocol.md`: stable execution contract for sidecars and tools.
 - `docs/transformer-alignment.md`: current transformer-alignment status and next
   steps.
@@ -74,6 +82,7 @@ This repository does **not** claim to fully reproduce the original article:
 ```bash
 # Requires WABT tools such as `wat2wasm` in PATH.
 # Optional: `clang` in PATH for the C-to-WASM example.
+# Optional: `pip install -e .[transformers]` for the Qwen3 integration scaffold.
 PYTHONPATH=src python3 -m llm_computer
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
@@ -96,4 +105,6 @@ The current example set includes:
 - a transformer-style verification path that now covers locals, control flow,
   memory, and one compiled-C example,
 - a sidecar service plus adapter prototypes that keep the execution contract
-  stable across open-source and closed-source integration paths.
+  stable across open-source and closed-source integration paths,
+- a Qwen3 plus Transformers scaffold that turns the stable sidecar contract
+  into a real open-source model integration loop.
