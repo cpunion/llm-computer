@@ -42,6 +42,7 @@ class ExecutionConversationResult:
     stop_reason: str
     used_execution: bool
     intercepted_requests: int = 0
+    structured_captures: int = 0
     turns: list[ExecutionTurn] = field(default_factory=list)
     messages: list[dict[str, str]] = field(default_factory=list)
 
@@ -60,7 +61,7 @@ class InterceptingChatRuntime(ChatRuntime, Protocol):
         self,
         messages: list[dict[str, str]],
         settings: GenerationSettings,
-    ) -> str:
+    ) -> tuple[str, bool]:
         ...
 
 
@@ -217,7 +218,7 @@ class TransformersChatRuntime:
         self,
         messages: list[dict[str, str]],
         settings: GenerationSettings,
-    ) -> str:
+    ) -> tuple[str, bool]:
         torch, _, _ = _require_transformers()
         if settings.do_sample:
             raise RuntimeError("Request-boundary interception currently supports only deterministic generation")
@@ -259,11 +260,14 @@ class TransformersChatRuntime:
                 past_key_values = outputs.past_key_values
 
                 text = self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
-                end_index = text.find(request_end_tag)
-                if end_index >= 0:
-                    return text[: end_index + len(request_end_tag)]
+                canonical_request = OpenSourceRuntimeAdapter.try_extract_request_segment(text)
+                if canonical_request is not None:
+                    end_index = text.find(request_end_tag)
+                    if end_index >= 0:
+                        return text[: end_index + len(request_end_tag)], False
+                    return canonical_request, True
                 if next_token_id in eos_ids:
-                    return text
+                    return text, False
 
                 current_input_ids = torch.tensor([[next_token_id]], device=input_ids.device, dtype=input_ids.dtype)
                 if current_attention_mask is not None:
@@ -272,7 +276,7 @@ class TransformersChatRuntime:
                         dim=-1,
                     )
 
-        return self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
+        return self.tokenizer.decode(generated_token_ids, skip_special_tokens=True), False
 
 
 class QwenExecutionOrchestrator:
@@ -385,12 +389,12 @@ class QwenExecutionOrchestrator:
         settings: GenerationSettings,
         *,
         prefer_interception: bool,
-    ) -> tuple[str, bool]:
+    ) -> tuple[str, bool, bool]:
         if prefer_interception and settings.intercept_request_boundary and self._runtime_supports_request_interception(self.runtime):
             runtime = self.runtime
-            assistant_text = runtime.generate_until_request_boundary(conversation, settings)  # type: ignore[attr-defined]
-            return assistant_text, self.adapter.contains_request(assistant_text)
-        return self.runtime.generate(conversation, settings), False
+            assistant_text, structured_capture = runtime.generate_until_request_boundary(conversation, settings)  # type: ignore[attr-defined]
+            return assistant_text, self.adapter.contains_request(assistant_text), structured_capture
+        return self.runtime.generate(conversation, settings), False, False
 
     def run(
         self,
@@ -404,26 +408,30 @@ class QwenExecutionOrchestrator:
         turns: list[ExecutionTurn] = []
         used_execution = False
         intercepted_requests = 0
+        structured_captures = 0
 
         for _ in range(max_round_trips):
-            assistant_text, intercepted_request = self._generate_assistant_text(
+            assistant_text, intercepted_request, structured_capture = self._generate_assistant_text(
                 conversation,
                 settings,
                 prefer_interception=not used_execution,
             )
             if intercepted_request:
                 intercepted_requests += 1
+            if structured_capture:
+                structured_captures += 1
             conversation.append({"role": "assistant", "content": assistant_text})
             try:
                 resolved = self.adapter.maybe_resolve(assistant_text)
             except Exception as exc:
-                if not self.adapter.contains_request(assistant_text):
+                if not self.adapter.contains_request_marker(assistant_text):
                     turns.append(ExecutionTurn(assistant_text=assistant_text))
                     return ExecutionConversationResult(
                         final_text=assistant_text,
                         stop_reason="assistant_completed",
                         used_execution=used_execution,
                         intercepted_requests=intercepted_requests,
+                        structured_captures=structured_captures,
                         turns=turns,
                         messages=conversation,
                     )
@@ -437,6 +445,7 @@ class QwenExecutionOrchestrator:
                     stop_reason="assistant_completed",
                     used_execution=used_execution,
                     intercepted_requests=intercepted_requests,
+                    structured_captures=structured_captures,
                     turns=turns,
                     messages=conversation,
                 )
@@ -451,6 +460,7 @@ class QwenExecutionOrchestrator:
             stop_reason="max_round_trips_reached",
             used_execution=used_execution,
             intercepted_requests=intercepted_requests,
+            structured_captures=structured_captures,
             turns=turns,
             messages=conversation,
         )

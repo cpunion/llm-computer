@@ -33,12 +33,12 @@ class FakeRuntime:
 
 
 class FakeInterceptRuntime(FakeRuntime):
-    def __init__(self, outputs: list[str], intercepted_outputs: list[str]) -> None:
+    def __init__(self, outputs: list[str], intercepted_outputs: list[tuple[str, bool]]) -> None:
         super().__init__(outputs)
         self.intercepted_outputs = intercepted_outputs[:]
         self.intercept_calls: list[list[dict[str, str]]] = []
 
-    def generate_until_request_boundary(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
+    def generate_until_request_boundary(self, messages: list[dict[str, str]], settings: GenerationSettings) -> tuple[str, bool]:
         self.intercept_calls.append([{"role": message["role"], "content": message["content"]} for message in messages])
         if not self.intercepted_outputs:
             raise AssertionError("No more fake intercepted outputs available")
@@ -115,7 +115,7 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
     def test_run_uses_request_interception_when_supported(self) -> None:
         runtime = FakeInterceptRuntime(
             outputs=["42"],
-            intercepted_outputs=[SUPPORTED_WAT_REQUEST],
+            intercepted_outputs=[(SUPPORTED_WAT_REQUEST, False)],
         )
         orchestrator = QwenExecutionOrchestrator(runtime)
         result = orchestrator.run(
@@ -125,9 +125,34 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
 
         self.assertTrue(result.used_execution)
         self.assertEqual(1, result.intercepted_requests)
+        self.assertEqual(0, result.structured_captures)
         self.assertEqual("42", result.final_text)
         self.assertEqual(1, len(runtime.intercept_calls))
         self.assertEqual(1, len(runtime.calls))
+
+    def test_run_uses_structured_capture_without_closing_tag(self) -> None:
+        partial_request = """
+<exec_request>{
+  "source_kind": "wat",
+  "source": "(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))",
+  "mode": "auto",
+  "trace_limit": 1
+}
+"""
+        runtime = FakeInterceptRuntime(
+            outputs=["42"],
+            intercepted_outputs=[(partial_request, True)],
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        result = orchestrator.run(
+            QwenExecutionOrchestrator.prepare_messages("Compute exactly."),
+            settings=GenerationSettings(intercept_request_boundary=True),
+        )
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual(1, result.intercepted_requests)
+        self.assertEqual(1, result.structured_captures)
+        self.assertEqual("42", result.final_text)
 
     def test_run_falls_back_when_request_interception_is_unavailable(self) -> None:
         runtime = FakeRuntime([SUPPORTED_WAT_REQUEST, "42"])

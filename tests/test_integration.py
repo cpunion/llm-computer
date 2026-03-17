@@ -66,6 +66,47 @@ class IntegrationPrototypeTest(unittest.TestCase):
         self.assertTrue(response.ok)
         self.assertEqual([6], response.results)
 
+    def test_open_source_runtime_adapter_resolves_partial_tagged_request(self) -> None:
+        adapter = OpenSourceRuntimeAdapter()
+        partial = """
+        <exec_request>
+        {
+          "source_kind": "wat",
+          "source": "(module (func (export \\"main\\") (result i32) i32.const 2 i32.const 3 i32.mul))",
+          "mode": "auto"
+        }
+        """
+        response_segment = adapter.maybe_resolve(partial)
+        self.assertIn("<exec_response>", response_segment)
+        response_json = (
+            response_segment
+            .split("<exec_response>", maxsplit=1)[1]
+            .split("</exec_response>", maxsplit=1)[0]
+        )
+        response = ExecutionResponse.from_json(response_json)
+        self.assertTrue(response.ok)
+        self.assertEqual([6], response.results)
+
+    def test_open_source_runtime_adapter_resolves_bare_json_request(self) -> None:
+        adapter = OpenSourceRuntimeAdapter()
+        bare_json = """
+        {
+          "source_kind": "wat",
+          "source": "(module (func (export \\"main\\") (result i32) i32.const 2 i32.const 3 i32.mul))",
+          "mode": "auto"
+        }
+        """
+        response_segment = adapter.maybe_resolve(bare_json)
+        self.assertIn("<exec_response>", response_segment)
+        response_json = (
+            response_segment
+            .split("<exec_response>", maxsplit=1)[1]
+            .split("</exec_response>", maxsplit=1)[0]
+        )
+        response = ExecutionResponse.from_json(response_json)
+        self.assertTrue(response.ok)
+        self.assertEqual([6], response.results)
+
     def test_closed_source_tool_adapter_invokes_shared_schema(self) -> None:
         adapter = ClosedSourceToolAdapter()
         tool_spec = adapter.tool_spec()

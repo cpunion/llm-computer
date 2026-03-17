@@ -64,6 +64,7 @@ def main() -> None:
                 "stop_reason": result.stop_reason,
                 "used_execution": result.used_execution,
                 "intercepted_requests": result.intercepted_requests,
+                "structured_captures": result.structured_captures,
                 "turns": len(result.turns),
             },
             indent=2,

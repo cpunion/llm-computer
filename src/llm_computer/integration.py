@@ -29,7 +29,13 @@ class OpenSourceRuntimeAdapter:
 
     @classmethod
     def contains_request(cls, text: str) -> bool:
-        return f"<{cls.REQUEST_TAG}>" in text and f"</{cls.REQUEST_TAG}>" in text
+        return cls.try_extract_request_segment(text) is not None
+
+    @classmethod
+    def contains_request_marker(cls, text: str) -> bool:
+        start_tag = f"<{cls.REQUEST_TAG}>"
+        end_tag = f"</{cls.REQUEST_TAG}>"
+        return start_tag in text or end_tag in text
 
     @classmethod
     def render_request_segment(cls, request: ExecutionRequest) -> str:
@@ -61,19 +67,46 @@ class OpenSourceRuntimeAdapter:
                 continue
         raise ValueError("Could not extract a valid JSON object from the execution request block")
 
+    @classmethod
+    def try_extract_request_segment(cls, text: str) -> str | None:
+        start_tag = f"<{cls.REQUEST_TAG}>"
+        end_tag = f"</{cls.REQUEST_TAG}>"
+        start_index = text.find(start_tag)
+        end_index = text.find(end_tag, start_index + len(start_tag)) if start_index >= 0 else -1
+
+        if start_index >= 0:
+            payload_end = end_index if end_index >= 0 else len(text)
+            payload = text[start_index + len(start_tag) : payload_end].strip()
+        else:
+            trimmed = text.strip()
+            if not (trimmed.startswith("{") or trimmed.startswith("```")):
+                return None
+            payload = trimmed
+
+        try:
+            request = ExecutionRequest.from_json(cls._extract_json_object(payload))
+        except Exception:
+            return None
+        return cls.render_request_segment(request)
+
     def maybe_resolve(self, text: str) -> str:
         start_tag = f"<{self.REQUEST_TAG}>"
         end_tag = f"</{self.REQUEST_TAG}>"
         start_index = text.find(start_tag)
         end_index = text.find(end_tag, start_index + len(start_tag))
-        if start_index < 0 or end_index < 0:
+        canonical_segment = self.try_extract_request_segment(text)
+        if canonical_segment is None:
+            if self.contains_request_marker(text):
+                raise ValueError("Could not extract a valid JSON object from the execution request block")
             return text
-        payload = text[start_index + len(start_tag) : end_index].strip()
-        request = ExecutionRequest.from_json(self._extract_json_object(payload))
+        request = ExecutionRequest.from_json(self._extract_json_object(canonical_segment))
         response = self.service.execute(request)
+        response_segment = self.render_response_segment(response)
+        if start_index < 0 or end_index < 0:
+            return response_segment
         return (
             text[:start_index]
-            + self.render_response_segment(response)
+            + response_segment
             + text[end_index + len(end_tag) :]
         )
 

@@ -169,6 +169,38 @@ Observed outcome:
 - the runtime summary reported `used_execution=true`, `turns=2`, and
   `intercepted_requests=1`
 
+## Stage 6: Structured Request Capture
+
+Goal:
+
+- reduce dependence on the closing request tag by canonicalizing a complete
+  execution JSON object as soon as it becomes valid
+
+Validation:
+
+```bash
+uv run python -m unittest discover -s tests -v
+python3 -m compileall src tests
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --few-shot-example \
+  --intercept-request-boundary \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: do not answer directly. Your first reply must begin with <exec_request> and then contain exactly one valid JSON object. Stop immediately after the JSON object and do not emit </exec_request>. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
+```
+
+Observed outcome:
+
+- `34` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the real open-source live run again returned the final answer `42`
+- the runtime summary reported `used_execution=true`, `turns=2`,
+  `intercepted_requests=1`, and `structured_captures=1`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -177,8 +209,9 @@ claims:
 1. the execution backends reproduce the current semantic subset correctly
 2. the shared sidecar contract works across open-source and closed-source
    integration styles
-3. the open-source path can now be driven both through plain sidecar round trips
-   and through a first request-boundary interception wrapper
+3. the open-source path can now be driven through plain sidecar round trips,
+   through a request-boundary interception wrapper, and through a deeper
+   structured-request capture wrapper
 
 The remaining gap to the article's stronger end state is still the same:
 

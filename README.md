@@ -122,6 +122,9 @@ The current example set includes:
 - a request-boundary interception mode for the open-source runtime that stops
   generation as soon as `</exec_request>` appears and injects the sidecar
   response immediately,
+- a deeper structured-request capture mode for the open-source runtime that can
+  canonicalize a complete execution JSON object even before the closing tag
+  appears,
 - a Gemini closed-source integration that exercises the same sidecar contract
   through explicit tool calls.
 
@@ -132,5 +135,7 @@ Current live-validation status:
   with a real cached Qwen-family model
 - the open-source request-boundary interception mode has also been validated
   end-to-end with the same cached Qwen-family model
+- the deeper structured-request capture mode has also been validated end-to-end
+  with the same cached Qwen-family model
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

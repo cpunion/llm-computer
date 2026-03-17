@@ -60,6 +60,9 @@ Current status:
   cached Qwen-family model
 - the first request-boundary interception prototype is also implemented and has
   been exercised end-to-end with the same cached Qwen-family model
+- the same open-source path now also supports structured request capture before
+  `</exec_request>` and has been exercised end-to-end with the same cached
+  Qwen-family model
 - live `Qwen3-8B` checkpoint execution still depends on finishing a local
   download
 
@@ -119,6 +122,9 @@ Current prototype bridge:
   and response spans
 - `TransformersChatRuntime` now includes a first request-boundary interception
   mode that stops generation once `</exec_request>` is emitted
+- `OpenSourceRuntimeAdapter` and `TransformersChatRuntime` now also support
+  structured request capture when a valid execution JSON object is complete even
+  before the closing tag has appeared
 - the next step is to replace this wrapper-level interception with deeper
   runtime interception inside an open-weight inference engine
 

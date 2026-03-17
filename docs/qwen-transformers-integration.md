@@ -26,6 +26,8 @@ It provides:
   - performs one generation step
   - optionally performs deterministic request-boundary interception and stops as
     soon as `</exec_request>` is emitted
+  - can canonicalize a complete execution JSON object even if the closing tag
+    has not been emitted yet
 - `QwenExecutionOrchestrator`
   - adds execution-lane system instructions
   - detects `<exec_request>...</exec_request>` blocks
@@ -48,6 +50,9 @@ What completed successfully:
   `Qwen/Qwen2.5-0.5B-Instruct` on the same `Transformers + sidecar` path
 - a second full live execution round-trip completed successfully with the same
   model while request-boundary interception was enabled
+- a third full live execution round-trip completed successfully with the same
+  model while the model was instructed to stop after the JSON object and omit
+  the closing tag
 
 Observed successful open-source live run:
 
@@ -75,6 +80,21 @@ Observed successful open-source live run with request-boundary interception:
   - `intercepted_requests=1`
   - `turns=2`
 
+Observed successful open-source live run with structured request capture:
+
+- model: `Qwen/Qwen2.5-0.5B-Instruct`
+- device: `mps`
+- mode: few-shot protocol example enabled
+- interception: `--intercept-request-boundary`
+- protocol constraint: the first reply had to stop after the JSON object and
+  omit `</exec_request>`
+- task: compute `6 * 7`
+- runtime summary:
+  - `used_execution=true`
+  - `intercepted_requests=1`
+  - `structured_captures=1`
+  - `turns=2`
+
 What did not complete in this session:
 
 - a full live generation run from a downloaded `Qwen/Qwen3-8B` checkpoint
@@ -95,6 +115,8 @@ Interpretation:
   cached Qwen-family model
 - the first runtime-interception prototype is also validated end-to-end through
   the same real cached Qwen-family model
+- the deeper structured-capture path is also validated end-to-end through the
+  same real cached Qwen-family model
 - the remaining open-source gap is specifically `Qwen3-8B` live validation, not
   the generic `Transformers + sidecar` integration
 
@@ -138,6 +160,16 @@ uv run llm-computer-qwen \
   --max-round-trips 2 \
   --system 'Protocol requirement: your first reply must be exactly one <exec_request>...</exec_request> block and nothing else. Inside the tags output one valid JSON object only. Use source_kind="wat", mode="auto", and source containing a complete WAT module. Do not answer directly. Do not use Python. After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
+
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --few-shot-example \
+  --intercept-request-boundary \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: do not answer directly. Your first reply must begin with <exec_request> and then contain exactly one valid JSON object. Stop immediately after the JSON object and do not emit </exec_request>. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
 ```
 
 ## Why this is the right first step
@@ -154,7 +186,7 @@ This integration is intentionally conservative:
 The next implementation sequence should be:
 
 1. Complete one real local Qwen3 checkpoint download and rerun the scaffold.
-2. Replace the current request-boundary wrapper with a deeper runtime
+2. Replace the current structured-capture wrapper with a deeper runtime
    interception path inside the inference engine.
 3. Add execution-segment handling that is separate from ordinary conversation
    tokens.

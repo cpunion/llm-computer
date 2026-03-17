@@ -37,7 +37,7 @@ uv run llm-computer
 
 Observed result after the latest interception-stage changes:
 
-- `31` unit tests passed
+- `34` unit tests passed
 - `2` tests skipped because the environment already includes the optional
   dependency branches they would otherwise exercise
 
@@ -75,6 +75,10 @@ Observed status on 2026-03-17:
 - the request-boundary interception mode also completed a live run with the same
   model and returned the final answer `42`
 - the interception summary reported `intercepted_requests=1`
+- the structured-request capture mode also completed a live run with the same
+  model and returned the final answer `42`
+- the structured summary reported `intercepted_requests=1` and
+  `structured_captures=1`
 - live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
 - the resulting conclusion is that the open-source runtime path is validated in
@@ -92,5 +96,19 @@ uv run llm-computer-qwen \
   --max-round-trips 3 \
   --max-new-tokens 128 \
   --system 'Protocol requirement: your first reply must be exactly one <exec_request>...</exec_request> block and nothing else. Inside the tags output one valid JSON object only. Use source_kind="wat", mode="auto", and source containing a complete WAT module. Do not answer directly. Do not use Python. After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
+```
+
+Validated structured-capture command:
+
+```bash
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --few-shot-example \
+  --intercept-request-boundary \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: do not answer directly. Your first reply must begin with <exec_request> and then contain exactly one valid JSON object. Stop immediately after the JSON object and do not emit </exec_request>. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
 ```
