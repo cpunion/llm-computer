@@ -66,7 +66,8 @@ This repository does **not** claim to fully reproduce the original article:
 - `src/llm_computer/service.py`: execution service boundary over the available
   backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
-  restricted control-flow subset.
+  restricted WASM subset with explicit feature extraction, transition, and
+  append-only writeback stages.
 - `src/llm_computer/integration.py`: open-source and closed-source adapter
   prototypes over the service API.
 - `src/llm_computer/__main__.py`: command-line entry point.
@@ -189,5 +190,7 @@ Current live-validation status:
 - the article's Sudoku example now also has a dedicated result-validation
   harness that compares append-only and transformer snapshots against the
   reference path at fixed step budgets
+- the transformer path now exposes an explicit execution-layer split between
+  feature extraction, transition gating, and append-only writeback
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

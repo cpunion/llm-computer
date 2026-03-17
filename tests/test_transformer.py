@@ -4,9 +4,34 @@ import shutil
 import unittest
 
 from llm_computer.examples import compiled_c_sum_module, factorial_module, memory_roundtrip_module, memory_sum_module, triangular_sum_module
-from llm_computer.transformer import TinyExecutionTransformer, supports_transformer_verification
+from llm_computer.transformer import DecodedInstruction, TinyExecutionBlock, TinyExecutionTransformer, supports_transformer_verification
 from llm_computer.executor import HullTimeline, NaiveTimeline
-from llm_computer.wasm import ReferenceWasmExecutor
+from llm_computer.wasm import ReferenceWasmExecutor, WasmOpcode
+
+
+class FakeState:
+    def __init__(
+        self,
+        *,
+        stack: dict[int, int] | None = None,
+        locals_: dict[int, int] | None = None,
+        memory: dict[int, int] | None = None,
+    ) -> None:
+        self._stack = stack or {}
+        self._locals = locals_ or {}
+        self._memory = memory or {}
+
+    def stack_read(self, slot: int, step: int) -> int:
+        return self._stack.get(slot, 0)
+
+    def local_read(self, index: int, step: int) -> int:
+        return self._locals.get(index, 0)
+
+    def memory_read_i32(self, address: int, step: int) -> int:
+        value = 0
+        for offset in range(4):
+            value |= (self._memory.get(address + offset, 0) & 0xFF) << (offset * 8)
+        return value
 
 
 @unittest.skipUnless(shutil.which("wat2wasm"), "wat2wasm is required for WASM example compilation")
@@ -43,6 +68,43 @@ class TinyTransformerTest(unittest.TestCase):
         function = compiled_c_sum_module(10).exported_function("sum_to")
         self.assertTrue(supports_transformer_verification(function))
         self.assertMatchesReference(compiled_c_sum_module(10), export_name="sum_to")
+
+    def test_execution_block_exposes_feature_transition_writeback_stages(self) -> None:
+        block = TinyExecutionBlock()
+        state = FakeState(stack={0: 6, 1: 7})
+        instruction = DecodedInstruction(opcode=WasmOpcode.I32_ADD)
+
+        features = block.extract_features(instruction, ip=4, step=9, depth_before=2, state=state)
+        signal = block.apply_transition(features)
+        writes = block.plan_writeback(features, signal)
+
+        self.assertEqual(7, features.top)
+        self.assertEqual(6, features.second)
+        self.assertEqual(5, signal.next_ip)
+        self.assertEqual(1, signal.depth_after)
+        self.assertEqual(13, signal.value)
+        self.assertEqual([("stack", 0, 13)], [(write.target, write.index, write.value) for write in writes])
+
+    def test_execution_block_plans_memory_store_writeback(self) -> None:
+        block = TinyExecutionBlock()
+        state = FakeState(stack={0: 16, 1: 0x11223344})
+        instruction = DecodedInstruction(opcode=WasmOpcode.I32_STORE, memory_offset=4)
+
+        features = block.extract_features(instruction, ip=7, step=3, depth_before=2, state=state)
+        signal = block.apply_transition(features)
+        writes = block.plan_writeback(features, signal)
+
+        self.assertEqual(20, features.effective_address)
+        self.assertEqual(0x11223344, signal.value)
+        self.assertEqual(
+            [
+                ("memory", 20, 0x44),
+                ("memory", 21, 0x33),
+                ("memory", 22, 0x22),
+                ("memory", 23, 0x11),
+            ],
+            [(write.target, write.index, write.value) for write in writes],
+        )
 
 
 if __name__ == "__main__":

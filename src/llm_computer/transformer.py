@@ -91,6 +91,30 @@ class ExecutionWrite:
 
 
 @dataclass(slots=True)
+class ExecutionFeatures:
+    instruction: DecodedInstruction
+    ip: int
+    step: int
+    depth_before: int
+    next_ip: int
+    top: int
+    second: int
+    local_index: int | None = None
+    local_value: int = 0
+    effective_address: int | None = None
+    memory_value: int = 0
+
+
+@dataclass(slots=True)
+class TransitionSignal:
+    next_ip: int
+    depth_after: int
+    value: int
+    branch_taken: bool
+    writeback_mode: str = "none"
+
+
+@dataclass(slots=True)
 class BlockTransition:
     next_ip: int
     depth_after: int
@@ -108,6 +132,231 @@ class StateReader(Protocol):
 
     def memory_read_i32(self, address: int, step: int) -> int:
         ...
+
+
+class ExecutionFeatureExtractor:
+    """Collects the local execution context that the transition layer consumes."""
+
+    def extract(
+        self,
+        instruction: DecodedInstruction,
+        ip: int,
+        step: int,
+        depth_before: int,
+        state: StateReader,
+    ) -> ExecutionFeatures:
+        top = state.stack_read(depth_before - 1, step)
+        second = state.stack_read(depth_before - 2, step)
+        local_index = instruction.immediate if instruction.opcode in {WasmOpcode.LOCAL_GET, WasmOpcode.LOCAL_SET, WasmOpcode.LOCAL_TEE} else None
+        local_value = state.local_read(local_index, step) if local_index is not None else 0
+        effective_address = None
+        memory_value = 0
+        if instruction.opcode == WasmOpcode.I32_LOAD:
+            effective_address = top + (instruction.memory_offset or 0)
+            memory_value = state.memory_read_i32(effective_address, step)
+        elif instruction.opcode == WasmOpcode.I32_STORE:
+            effective_address = second + (instruction.memory_offset or 0)
+
+        return ExecutionFeatures(
+            instruction=instruction,
+            ip=ip,
+            step=step,
+            depth_before=depth_before,
+            next_ip=ip + 1,
+            top=top,
+            second=second,
+            local_index=local_index,
+            local_value=local_value,
+            effective_address=effective_address,
+            memory_value=memory_value,
+        )
+
+
+class ExecutionTransitionLayer:
+    """Maps execution features onto a state-transition signal."""
+
+    def __init__(self) -> None:
+        self._comparison_ops = {
+            WasmOpcode.I32_EQ: lambda lhs, rhs: 1 if mask_u32(lhs) == mask_u32(rhs) else 0,
+            WasmOpcode.I32_NE: lambda lhs, rhs: 1 if mask_u32(lhs) != mask_u32(rhs) else 0,
+            WasmOpcode.I32_LT_S: lambda lhs, rhs: 1 if to_signed_i32(lhs) < to_signed_i32(rhs) else 0,
+            WasmOpcode.I32_GT_S: lambda lhs, rhs: 1 if to_signed_i32(lhs) > to_signed_i32(rhs) else 0,
+            WasmOpcode.I32_LE_S: lambda lhs, rhs: 1 if to_signed_i32(lhs) <= to_signed_i32(rhs) else 0,
+            WasmOpcode.I32_GE_S: lambda lhs, rhs: 1 if to_signed_i32(lhs) >= to_signed_i32(rhs) else 0,
+            WasmOpcode.I32_GE_U: lambda lhs, rhs: 1 if mask_u32(lhs) >= mask_u32(rhs) else 0,
+        }
+        self._binary_ops = {
+            WasmOpcode.I32_ADD: lambda lhs, rhs: lhs + rhs,
+            WasmOpcode.I32_SUB: lambda lhs, rhs: lhs - rhs,
+            WasmOpcode.I32_MUL: lambda lhs, rhs: lhs * rhs,
+            WasmOpcode.I32_AND: lambda lhs, rhs: mask_u32(lhs) & mask_u32(rhs),
+            WasmOpcode.I32_XOR: lambda lhs, rhs: mask_u32(lhs) ^ mask_u32(rhs),
+            WasmOpcode.I32_SHL: lambda lhs, rhs: mask_u32(lhs) << (mask_u32(rhs) & 31),
+            WasmOpcode.I32_SHR_U: lambda lhs, rhs: mask_u32(lhs) >> (mask_u32(rhs) & 31),
+        }
+
+    def transition(self, features: ExecutionFeatures) -> TransitionSignal:
+        opcode = features.instruction.opcode
+
+        if opcode in {WasmOpcode.BLOCK, WasmOpcode.LOOP, WasmOpcode.END}:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before,
+                value=0,
+                branch_taken=False,
+            )
+
+        if opcode == WasmOpcode.IF:
+            depth_after = features.depth_before - 1
+            if features.top == 0:
+                return TransitionSignal(
+                    next_ip=features.instruction.false_target or features.instruction.end_target or features.next_ip,
+                    depth_after=depth_after,
+                    value=0,
+                    branch_taken=True,
+                )
+            return TransitionSignal(next_ip=features.next_ip, depth_after=depth_after, value=0, branch_taken=False)
+
+        if opcode == WasmOpcode.ELSE:
+            return TransitionSignal(
+                next_ip=features.instruction.end_target or features.next_ip,
+                depth_after=features.depth_before,
+                value=0,
+                branch_taken=True,
+            )
+
+        if opcode == WasmOpcode.I32_CONST:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before + 1,
+                value=features.instruction.immediate or 0,
+                branch_taken=False,
+                writeback_mode="push_value",
+            )
+
+        if opcode == WasmOpcode.LOCAL_GET:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before + 1,
+                value=features.local_value,
+                branch_taken=False,
+                writeback_mode="push_value",
+            )
+
+        if opcode == WasmOpcode.LOCAL_SET:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before - 1,
+                value=features.top,
+                branch_taken=False,
+                writeback_mode="write_local_from_top",
+            )
+
+        if opcode == WasmOpcode.LOCAL_TEE:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before,
+                value=features.top,
+                branch_taken=False,
+                writeback_mode="write_local_from_top",
+            )
+
+        if opcode == WasmOpcode.I32_LOAD:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before,
+                value=features.memory_value,
+                branch_taken=False,
+                writeback_mode="replace_top",
+            )
+
+        if opcode == WasmOpcode.I32_STORE:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before - 2,
+                value=features.top,
+                branch_taken=False,
+                writeback_mode="store_i32",
+            )
+
+        if opcode in self._comparison_ops:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before - 1,
+                value=self._comparison_ops[opcode](features.second, features.top),
+                branch_taken=False,
+                writeback_mode="replace_second",
+            )
+
+        if opcode in self._binary_ops:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before - 1,
+                value=self._binary_ops[opcode](features.second, features.top),
+                branch_taken=False,
+                writeback_mode="replace_second",
+            )
+
+        if opcode == WasmOpcode.I32_EQZ:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before,
+                value=1 if features.top == 0 else 0,
+                branch_taken=False,
+                writeback_mode="replace_top",
+            )
+
+        if opcode == WasmOpcode.BR:
+            target = features.instruction.branch_target or 0
+            return TransitionSignal(next_ip=target, depth_after=features.depth_before, value=target, branch_taken=True)
+
+        if opcode == WasmOpcode.BR_IF:
+            target = features.instruction.branch_target or 0
+            if features.top != 0:
+                return TransitionSignal(next_ip=target, depth_after=features.depth_before - 1, value=target, branch_taken=True)
+            return TransitionSignal(next_ip=features.next_ip, depth_after=features.depth_before - 1, value=0, branch_taken=False)
+
+        if opcode == WasmOpcode.DROP:
+            return TransitionSignal(
+                next_ip=features.next_ip,
+                depth_after=features.depth_before - 1,
+                value=features.top,
+                branch_taken=False,
+            )
+
+        raise ValueError(f"Unsupported opcode: {opcode}")
+
+
+class ExecutionWritebackLayer:
+    """Converts transition signals into append-only state writes."""
+
+    def build(self, features: ExecutionFeatures, signal: TransitionSignal) -> list[ExecutionWrite]:
+        mode = signal.writeback_mode
+        if mode == "none":
+            return []
+        if mode == "push_value":
+            return [ExecutionWrite(target="stack", index=features.depth_before, value=signal.value)]
+        if mode == "replace_top":
+            return [ExecutionWrite(target="stack", index=features.depth_before - 1, value=signal.value)]
+        if mode == "replace_second":
+            return [ExecutionWrite(target="stack", index=features.depth_before - 2, value=signal.value)]
+        if mode == "write_local_from_top":
+            if features.local_index is None:
+                raise ValueError("Local writeback requires a local index")
+            return [ExecutionWrite(target="local", index=features.local_index, value=features.top)]
+        if mode == "store_i32":
+            if features.effective_address is None:
+                raise ValueError("Store writeback requires an effective address")
+            masked = mask_u32(features.top)
+            return [
+                ExecutionWrite(
+                    target="memory",
+                    index=features.effective_address + offset,
+                    value=(masked >> (offset * 8)) & 0xFF,
+                )
+                for offset in range(4)
+            ]
+        raise ValueError(f"Unknown writeback mode: {mode}")
 
 
 class StaticFieldHead:
@@ -142,6 +391,27 @@ def supports_transformer_verification(function: WasmFunction) -> bool:
 class TinyExecutionBlock:
     """A small transition block that consumes retrieved state and emits writes."""
 
+    def __init__(self) -> None:
+        self.feature_extractor = ExecutionFeatureExtractor()
+        self.transition_layer = ExecutionTransitionLayer()
+        self.writeback_layer = ExecutionWritebackLayer()
+
+    def extract_features(
+        self,
+        instruction: DecodedInstruction,
+        ip: int,
+        step: int,
+        depth_before: int,
+        state: StateReader,
+    ) -> ExecutionFeatures:
+        return self.feature_extractor.extract(instruction, ip, step, depth_before, state)
+
+    def apply_transition(self, features: ExecutionFeatures) -> TransitionSignal:
+        return self.transition_layer.transition(features)
+
+    def plan_writeback(self, features: ExecutionFeatures, signal: TransitionSignal) -> list[ExecutionWrite]:
+        return self.writeback_layer.build(features, signal)
+
     def apply(
         self,
         instruction: DecodedInstruction,
@@ -150,197 +420,15 @@ class TinyExecutionBlock:
         depth_before: int,
         state: StateReader,
     ) -> BlockTransition:
-        next_ip = ip + 1
-
-        if instruction.opcode in {WasmOpcode.BLOCK, WasmOpcode.LOOP, WasmOpcode.END}:
-            return BlockTransition(next_ip=next_ip, depth_after=depth_before, value=0, branch_taken=False)
-
-        if instruction.opcode == WasmOpcode.IF:
-            cond = state.stack_read(depth_before - 1, step)
-            depth_after = depth_before - 1
-            if cond == 0:
-                return BlockTransition(
-                    next_ip=instruction.false_target or instruction.end_target or next_ip,
-                    depth_after=depth_after,
-                    value=0,
-                    branch_taken=True,
-                )
-            return BlockTransition(next_ip=next_ip, depth_after=depth_after, value=0, branch_taken=False)
-
-        if instruction.opcode == WasmOpcode.ELSE:
-            return BlockTransition(
-                next_ip=instruction.end_target or next_ip,
-                depth_after=depth_before,
-                value=0,
-                branch_taken=True,
-            )
-
-        if instruction.opcode == WasmOpcode.I32_CONST:
-            value = instruction.immediate or 0
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before + 1,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.LOCAL_GET:
-            index = instruction.immediate or 0
-            value = state.local_read(index, step)
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before + 1,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.LOCAL_SET:
-            index = instruction.immediate or 0
-            value = state.stack_read(depth_before - 1, step)
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before - 1,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="local", index=index, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.LOCAL_TEE:
-            index = instruction.immediate or 0
-            value = state.stack_read(depth_before - 1, step)
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="local", index=index, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.I32_LOAD:
-            base = state.stack_read(depth_before - 1, step)
-            address = base + (instruction.memory_offset or 0)
-            value = state.memory_read_i32(address, step)
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before - 1, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.I32_STORE:
-            value = state.stack_read(depth_before - 1, step)
-            base = state.stack_read(depth_before - 2, step)
-            address = base + (instruction.memory_offset or 0)
-            writes = [
-                ExecutionWrite(target="memory", index=address + offset, value=(mask_u32(value) >> (offset * 8)) & 0xFF)
-                for offset in range(4)
-            ]
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before - 2,
-                value=value,
-                branch_taken=False,
-                writes=writes,
-            )
-
-        if instruction.opcode in {
-            WasmOpcode.I32_EQ,
-            WasmOpcode.I32_NE,
-            WasmOpcode.I32_LT_S,
-            WasmOpcode.I32_GT_S,
-            WasmOpcode.I32_LE_S,
-            WasmOpcode.I32_GE_S,
-            WasmOpcode.I32_GE_U,
-        }:
-            rhs = state.stack_read(depth_before - 1, step)
-            lhs = state.stack_read(depth_before - 2, step)
-            signed_lhs = to_signed_i32(lhs)
-            signed_rhs = to_signed_i32(rhs)
-            if instruction.opcode == WasmOpcode.I32_EQ:
-                value = 1 if mask_u32(lhs) == mask_u32(rhs) else 0
-            elif instruction.opcode == WasmOpcode.I32_NE:
-                value = 1 if mask_u32(lhs) != mask_u32(rhs) else 0
-            elif instruction.opcode == WasmOpcode.I32_LT_S:
-                value = 1 if signed_lhs < signed_rhs else 0
-            elif instruction.opcode == WasmOpcode.I32_GT_S:
-                value = 1 if signed_lhs > signed_rhs else 0
-            elif instruction.opcode == WasmOpcode.I32_GE_S:
-                value = 1 if signed_lhs >= signed_rhs else 0
-            elif instruction.opcode == WasmOpcode.I32_GE_U:
-                value = 1 if mask_u32(lhs) >= mask_u32(rhs) else 0
-            else:
-                value = 1 if signed_lhs <= signed_rhs else 0
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before - 1,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before - 2, value=value)],
-            )
-
-        if instruction.opcode in {
-            WasmOpcode.I32_ADD,
-            WasmOpcode.I32_SUB,
-            WasmOpcode.I32_MUL,
-            WasmOpcode.I32_AND,
-            WasmOpcode.I32_XOR,
-            WasmOpcode.I32_SHL,
-            WasmOpcode.I32_SHR_U,
-        }:
-            rhs = state.stack_read(depth_before - 1, step)
-            lhs = state.stack_read(depth_before - 2, step)
-            if instruction.opcode == WasmOpcode.I32_ADD:
-                value = lhs + rhs
-            elif instruction.opcode == WasmOpcode.I32_SUB:
-                value = lhs - rhs
-            elif instruction.opcode == WasmOpcode.I32_MUL:
-                value = lhs * rhs
-            elif instruction.opcode == WasmOpcode.I32_AND:
-                value = mask_u32(lhs) & mask_u32(rhs)
-            elif instruction.opcode == WasmOpcode.I32_XOR:
-                value = mask_u32(lhs) ^ mask_u32(rhs)
-            elif instruction.opcode == WasmOpcode.I32_SHR_U:
-                value = mask_u32(lhs) >> (mask_u32(rhs) & 31)
-            else:
-                value = mask_u32(lhs) << (mask_u32(rhs) & 31)
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before - 1,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before - 2, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.I32_EQZ:
-            top = state.stack_read(depth_before - 1, step)
-            value = 1 if top == 0 else 0
-            return BlockTransition(
-                next_ip=next_ip,
-                depth_after=depth_before,
-                value=value,
-                branch_taken=False,
-                writes=[ExecutionWrite(target="stack", index=depth_before - 1, value=value)],
-            )
-
-        if instruction.opcode == WasmOpcode.BR:
-            target = instruction.branch_target or 0
-            return BlockTransition(next_ip=target, depth_after=depth_before, value=target, branch_taken=True)
-
-        if instruction.opcode == WasmOpcode.BR_IF:
-            cond = state.stack_read(depth_before - 1, step)
-            target = instruction.branch_target or 0
-            if cond != 0:
-                return BlockTransition(next_ip=target, depth_after=depth_before - 1, value=target, branch_taken=True)
-            return BlockTransition(next_ip=next_ip, depth_after=depth_before - 1, value=0, branch_taken=False)
-
-        if instruction.opcode == WasmOpcode.DROP:
-            value = state.stack_read(depth_before - 1, step)
-            return BlockTransition(next_ip=next_ip, depth_after=depth_before - 1, value=value, branch_taken=False)
-
-        raise ValueError(f"Unsupported opcode: {instruction.opcode}")
+        features = self.extract_features(instruction, ip, step, depth_before, state)
+        signal = self.apply_transition(features)
+        return BlockTransition(
+            next_ip=signal.next_ip,
+            depth_after=signal.depth_after,
+            value=signal.value,
+            branch_taken=signal.branch_taken,
+            writes=self.plan_writeback(features, signal),
+        )
 
 
 class TinyExecutionTransformer:

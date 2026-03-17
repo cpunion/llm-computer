@@ -392,6 +392,32 @@ claims:
 9. the repository now also preserves a dedicated Sudoku result-validation stage
    that separates full checksum confirmation from prefix-state equivalence
 
+## Stage 13: Transformer Execution-Layer Split
+
+Goal:
+
+- refactor the transformer verifier so that execution is split into explicit
+  feature extraction, transition, and append-only writeback stages
+- keep the supported WASM subset and reference-trace behavior unchanged
+
+Validation:
+
+```bash
+./scripts/stage13_transformer_execution_block.sh
+```
+
+Observed outcome:
+
+- `53` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the transformer verifier still matches the reference executor on the current
+  supported subset
+- the execution block now exposes independently testable feature, transition,
+  and writeback stages
+- new unit tests verify the staged execution flow on representative arithmetic
+  and memory-store instructions
+
 The remaining gap to the article's stronger end state is still the same:
 
 - no true execution heads inside a real model

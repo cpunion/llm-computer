@@ -23,7 +23,10 @@ to the article:
 - dynamic state heads retrieve the latest writes for `ip`, locals, and stack
   slots from append-only traces,
 - stack depth is reconstructed from append-only deltas,
-- an explicit tiny execution block applies opcode-specific state updates.
+- an explicit tiny execution block now splits execution into:
+  - feature extraction from recovered state
+  - a transition layer that maps features onto the next-state signal
+  - an append-only writeback layer that emits the next writes
 
 This verifier currently supports:
 
@@ -90,6 +93,17 @@ The restricted subset is enough to make the core architectural point:
 The repository now also exposes this transformer-aligned path through a stable
 service boundary, so the same subset can be exercised by open-source and
 closed-source adapter prototypes without changing the backend contract.
+
+The latest alignment step is important because it moves the repository away
+from a single Python opcode dispatcher and closer to the article's intended
+shape:
+
+- the transition logic is still deterministic Python, but it is no longer mixed
+  with state retrieval and writeback plumbing,
+- the execution path now has explicit stage boundaries that can later be mapped
+  onto learned or compiled transformer components,
+- unit tests can validate the execution stages independently of the end-to-end
+  trace replay.
 
 ## Next alignment milestones
 
