@@ -58,6 +58,8 @@ Current status:
 - it uses the stable sidecar protocol rather than changing model internals yet
 - the same runtime path has already been exercised end-to-end with a smaller
   cached Qwen-family model
+- the first request-boundary interception prototype is also implemented and has
+  been exercised end-to-end with the same cached Qwen-family model
 - live `Qwen3-8B` checkpoint execution still depends on finishing a local
   download
 
@@ -115,8 +117,10 @@ Current prototype bridge:
 
 - `OpenSourceRuntimeAdapter` already models the execution lane as tagged request
   and response spans
-- the next step is to replace the text-level handoff with runtime interception
-  inside an open-weight inference engine
+- `TransformersChatRuntime` now includes a first request-boundary interception
+  mode that stops generation once `</exec_request>` is emitted
+- the next step is to replace this wrapper-level interception with deeper
+  runtime interception inside an open-weight inference engine
 
 ### Phase 2: Tiny in-model executor block
 

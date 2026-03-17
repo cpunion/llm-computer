@@ -55,7 +55,8 @@ This repository does **not** claim to fully reproduce the original article:
   scaffold over the service protocol.
 - `src/llm_computer/gemini_cli.py`: `uv run` entry point for Gemini validation.
 - `src/llm_computer/qwen_cli.py`: `uv run` entry point for Qwen3 validation.
-  It also supports cached smaller Qwen-family models for smoke validation.
+  It also supports cached smaller Qwen-family models for smoke validation and
+  request-boundary interception experiments.
 - `src/llm_computer/service.py`: execution service boundary over the available
   backends.
 - `src/llm_computer/transformer.py`: tiny transformer-style verification for the
@@ -80,6 +81,7 @@ This repository does **not** claim to fully reproduce the original article:
 - `docs/qwen-transformers-integration.md`: current Qwen3 plus Transformers
   integration status and next steps.
 - `docs/runtime-validation.md`: `uv` environment and validated runtime commands.
+- `docs/stage-validation-log.md`: stage-by-stage validation commands and results.
 - `docs/service-protocol.md`: stable execution contract for sidecars and tools.
 - `docs/transformer-alignment.md`: current transformer-alignment status and next
   steps.
@@ -117,6 +119,9 @@ The current example set includes:
   stable across open-source and closed-source integration paths,
 - a Qwen3 plus Transformers scaffold that turns the stable sidecar contract
   into a real open-source model integration loop,
+- a request-boundary interception mode for the open-source runtime that stops
+  generation as soon as `</exec_request>` appears and injects the sidecar
+  response immediately,
 - a Gemini closed-source integration that exercises the same sidecar contract
   through explicit tool calls.
 
@@ -125,5 +130,7 @@ Current live-validation status:
 - Gemini has been validated end-to-end through a real tool call
 - the open-source `Transformers + sidecar` path has been validated end-to-end
   with a real cached Qwen-family model
+- the open-source request-boundary interception mode has also been validated
+  end-to-end with the same cached Qwen-family model
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

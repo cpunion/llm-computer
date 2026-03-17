@@ -35,6 +35,12 @@ uv run python -m unittest discover -s tests -v
 uv run llm-computer
 ```
 
+Observed result after the latest interception-stage changes:
+
+- `31` unit tests passed
+- `2` tests skipped because the environment already includes the optional
+  dependency branches they would otherwise exercise
+
 Closed-source Gemini validation:
 
 ```bash
@@ -66,8 +72,25 @@ Observed status on 2026-03-17:
   `Qwen/Qwen2.5-0.5B-Instruct` on `mps`
 - the same path emitted a valid `exec_request`, consumed a real
   `exec_response`, and returned the final answer `42`
+- the request-boundary interception mode also completed a live run with the same
+  model and returned the final answer `42`
+- the interception summary reported `intercepted_requests=1`
 - live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
 - the resulting conclusion is that the open-source runtime path is validated in
   principle, while `Qwen3-8B` specifically remains blocked by checkpoint fetch
   throughput
+
+Validated interception command:
+
+```bash
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --few-shot-example \
+  --intercept-request-boundary \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: your first reply must be exactly one <exec_request>...</exec_request> block and nothing else. Inside the tags output one valid JSON object only. Use source_kind="wat", mode="auto", and source containing a complete WAT module. Do not answer directly. Do not use Python. After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
+```

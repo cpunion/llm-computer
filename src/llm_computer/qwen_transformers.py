@@ -23,6 +23,7 @@ class GenerationSettings:
     top_p: float | None = None
     add_generation_prompt: bool = True
     enable_thinking: bool | None = False
+    intercept_request_boundary: bool = False
 
 
 @dataclass(slots=True)
@@ -40,6 +41,7 @@ class ExecutionConversationResult:
     final_text: str
     stop_reason: str
     used_execution: bool
+    intercepted_requests: int = 0
     turns: list[ExecutionTurn] = field(default_factory=list)
     messages: list[dict[str, str]] = field(default_factory=list)
 
@@ -48,6 +50,17 @@ class ChatRuntime(Protocol):
     """Minimal runtime surface needed by the execution loop."""
 
     def generate(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
+        ...
+
+
+class InterceptingChatRuntime(ChatRuntime, Protocol):
+    """Runtime surface for request-boundary interception."""
+
+    def generate_until_request_boundary(
+        self,
+        messages: list[dict[str, str]],
+        settings: GenerationSettings,
+    ) -> str:
         ...
 
 
@@ -200,6 +213,67 @@ class TransformersChatRuntime:
         output_ids = generated_ids[0][len(input_ids[0]) :]
         return self.tokenizer.decode(output_ids, skip_special_tokens=True)
 
+    def generate_until_request_boundary(
+        self,
+        messages: list[dict[str, str]],
+        settings: GenerationSettings,
+    ) -> str:
+        torch, _, _ = _require_transformers()
+        if settings.do_sample:
+            raise RuntimeError("Request-boundary interception currently supports only deterministic generation")
+
+        prompt = self.render_prompt(messages, settings)
+        model_inputs = self.tokenizer([prompt], return_tensors="pt")
+        if hasattr(model_inputs, "to"):
+            model_inputs = model_inputs.to(self.device)
+
+        input_ids = model_inputs["input_ids"]
+        attention_mask = model_inputs.get("attention_mask")
+        current_input_ids = input_ids
+        current_attention_mask = attention_mask
+        generated_token_ids: list[int] = []
+        past_key_values = None
+        request_end_tag = f"</{OpenSourceRuntimeAdapter.REQUEST_TAG}>"
+
+        eos_ids: set[int] = set()
+        tokenizer_eos = getattr(self.tokenizer, "eos_token_id", None)
+        if isinstance(tokenizer_eos, int):
+            eos_ids.add(tokenizer_eos)
+        generation_config = getattr(self.model, "generation_config", None)
+        config_eos = getattr(generation_config, "eos_token_id", None)
+        if isinstance(config_eos, int):
+            eos_ids.add(config_eos)
+        elif isinstance(config_eos, list):
+            eos_ids.update(token_id for token_id in config_eos if isinstance(token_id, int))
+
+        with torch.no_grad():
+            for _ in range(settings.max_new_tokens):
+                outputs = self.model(
+                    input_ids=current_input_ids,
+                    attention_mask=current_attention_mask,
+                    use_cache=True,
+                    past_key_values=past_key_values,
+                )
+                next_token_id = int(outputs.logits[:, -1, :].argmax(dim=-1).item())
+                generated_token_ids.append(next_token_id)
+                past_key_values = outputs.past_key_values
+
+                text = self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
+                end_index = text.find(request_end_tag)
+                if end_index >= 0:
+                    return text[: end_index + len(request_end_tag)]
+                if next_token_id in eos_ids:
+                    return text
+
+                current_input_ids = torch.tensor([[next_token_id]], device=input_ids.device, dtype=input_ids.dtype)
+                if current_attention_mask is not None:
+                    current_attention_mask = torch.cat(
+                        [current_attention_mask, current_attention_mask.new_ones((1, 1))],
+                        dim=-1,
+                    )
+
+        return self.tokenizer.decode(generated_token_ids, skip_special_tokens=True)
+
 
 class QwenExecutionOrchestrator:
     """Execution-aware chat loop for Qwen3 in Transformers."""
@@ -301,6 +375,23 @@ class QwenExecutionOrchestrator:
             "containing only a valid JSON object. Otherwise answer directly."
         )
 
+    @staticmethod
+    def _runtime_supports_request_interception(runtime: ChatRuntime) -> bool:
+        return hasattr(runtime, "generate_until_request_boundary")
+
+    def _generate_assistant_text(
+        self,
+        conversation: list[dict[str, str]],
+        settings: GenerationSettings,
+        *,
+        prefer_interception: bool,
+    ) -> tuple[str, bool]:
+        if prefer_interception and settings.intercept_request_boundary and self._runtime_supports_request_interception(self.runtime):
+            runtime = self.runtime
+            assistant_text = runtime.generate_until_request_boundary(conversation, settings)  # type: ignore[attr-defined]
+            return assistant_text, self.adapter.contains_request(assistant_text)
+        return self.runtime.generate(conversation, settings), False
+
     def run(
         self,
         messages: list[dict[str, str]],
@@ -312,9 +403,16 @@ class QwenExecutionOrchestrator:
         settings = settings or GenerationSettings()
         turns: list[ExecutionTurn] = []
         used_execution = False
+        intercepted_requests = 0
 
         for _ in range(max_round_trips):
-            assistant_text = self.runtime.generate(conversation, settings)
+            assistant_text, intercepted_request = self._generate_assistant_text(
+                conversation,
+                settings,
+                prefer_interception=not used_execution,
+            )
+            if intercepted_request:
+                intercepted_requests += 1
             conversation.append({"role": "assistant", "content": assistant_text})
             try:
                 resolved = self.adapter.maybe_resolve(assistant_text)
@@ -325,6 +423,7 @@ class QwenExecutionOrchestrator:
                         final_text=assistant_text,
                         stop_reason="assistant_completed",
                         used_execution=used_execution,
+                        intercepted_requests=intercepted_requests,
                         turns=turns,
                         messages=conversation,
                     )
@@ -337,6 +436,7 @@ class QwenExecutionOrchestrator:
                     final_text=assistant_text,
                     stop_reason="assistant_completed",
                     used_execution=used_execution,
+                    intercepted_requests=intercepted_requests,
                     turns=turns,
                     messages=conversation,
                 )
@@ -350,6 +450,7 @@ class QwenExecutionOrchestrator:
             final_text=final_text,
             stop_reason="max_round_trips_reached",
             used_execution=used_execution,
+            intercepted_requests=intercepted_requests,
             turns=turns,
             messages=conversation,
         )

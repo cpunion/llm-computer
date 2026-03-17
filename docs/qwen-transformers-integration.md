@@ -24,6 +24,8 @@ It provides:
   - renders chat prompts through `apply_chat_template` when available
   - resolves a practical local device in `cuda -> mps -> cpu` order
   - performs one generation step
+  - optionally performs deterministic request-boundary interception and stops as
+    soon as `</exec_request>` is emitted
 - `QwenExecutionOrchestrator`
   - adds execution-lane system instructions
   - detects `<exec_request>...</exec_request>` blocks
@@ -44,6 +46,8 @@ What completed successfully:
 - the Qwen runtime scaffold can be imported and invoked locally
 - a full live execution round-trip completed successfully with
   `Qwen/Qwen2.5-0.5B-Instruct` on the same `Transformers + sidecar` path
+- a second full live execution round-trip completed successfully with the same
+  model while request-boundary interception was enabled
 
 Observed successful open-source live run:
 
@@ -57,6 +61,18 @@ Observed successful open-source live run:
 - model then replied with `42`
 - final orchestrator summary:
   - `used_execution=true`
+  - `turns=2`
+
+Observed successful open-source live run with request-boundary interception:
+
+- model: `Qwen/Qwen2.5-0.5B-Instruct`
+- device: `mps`
+- mode: few-shot protocol example enabled
+- interception: `--intercept-request-boundary`
+- task: compute `6 * 7`
+- runtime summary:
+  - `used_execution=true`
+  - `intercepted_requests=1`
   - `turns=2`
 
 What did not complete in this session:
@@ -77,6 +93,8 @@ Interpretation:
   throughput, not the repository's orchestration logic
 - the open-source runtime path itself is now validated end-to-end through a real
   cached Qwen-family model
+- the first runtime-interception prototype is also validated end-to-end through
+  the same real cached Qwen-family model
 - the remaining open-source gap is specifically `Qwen3-8B` live validation, not
   the generic `Transformers + sidecar` integration
 
@@ -92,7 +110,8 @@ It does not yet:
 - create a true in-model execution block
 
 At this stage, the model remains a planner and language model, while the exact
-execution lane remains external.
+execution lane remains external. The new interception mode is still a runtime
+wrapper around the base model rather than a modified model architecture.
 
 ## Installation
 
@@ -115,6 +134,7 @@ uv run llm-computer-qwen \
   --model-id Qwen/Qwen2.5-0.5B-Instruct \
   --device mps \
   --few-shot-example \
+  --intercept-request-boundary \
   --max-round-trips 2 \
   --system 'Protocol requirement: your first reply must be exactly one <exec_request>...</exec_request> block and nothing else. Inside the tags output one valid JSON object only. Use source_kind="wat", mode="auto", and source containing a complete WAT module. Do not answer directly. Do not use Python. After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
@@ -134,7 +154,8 @@ This integration is intentionally conservative:
 The next implementation sequence should be:
 
 1. Complete one real local Qwen3 checkpoint download and rerun the scaffold.
-2. Replace the text-level request interception with runtime-level interception.
+2. Replace the current request-boundary wrapper with a deeper runtime
+   interception path inside the inference engine.
 3. Add execution-segment handling that is separate from ordinary conversation
    tokens.
 4. Prototype the same contract in `SGLang`.

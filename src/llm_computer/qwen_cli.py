@@ -22,6 +22,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--do-sample", action="store_true", help="Enable sampling.")
     parser.add_argument("--enable-thinking", action="store_true", help="Enable Qwen thinking mode when supported.")
     parser.add_argument("--few-shot-example", action="store_true", help="Include one protocol demonstration exchange.")
+    parser.add_argument(
+        "--intercept-request-boundary",
+        action="store_true",
+        help="Stop generation as soon as </exec_request> is emitted and inject the runtime response immediately.",
+    )
     parser.add_argument("--print-trace", action="store_true", help="Print the full execution conversation as JSON.")
     return parser
 
@@ -46,6 +51,7 @@ def main() -> None:
             temperature=args.temperature,
             top_p=args.top_p,
             enable_thinking=args.enable_thinking,
+            intercept_request_boundary=args.intercept_request_boundary,
         ),
         max_round_trips=args.max_round_trips,
     )
@@ -57,6 +63,7 @@ def main() -> None:
             {
                 "stop_reason": result.stop_reason,
                 "used_execution": result.used_execution,
+                "intercepted_requests": result.intercepted_requests,
                 "turns": len(result.turns),
             },
             indent=2,
