@@ -5,6 +5,8 @@ import unittest
 from llm_computer.qwen_transformers import (
     ExecutionPromptMode,
     GenerationSettings,
+    OpenSourceIntegrationMode,
+    QwenExecutionBlockOrchestrator,
     QwenExecutionOrchestrator,
     TransformersChatRuntime,
     transformers_available,
@@ -25,9 +27,11 @@ class FakeRuntime:
     def __init__(self, outputs: list[str]) -> None:
         self.outputs = outputs[:]
         self.calls: list[list[dict[str, str]]] = []
+        self.call_settings: list[GenerationSettings] = []
 
     def generate(self, messages: list[dict[str, str]], settings: GenerationSettings) -> str:
         self.calls.append([{"role": message["role"], "content": message["content"]} for message in messages])
+        self.call_settings.append(settings)
         if not self.outputs:
             raise AssertionError("No more fake outputs available")
         return self.outputs.pop(0)
@@ -124,6 +128,25 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertEqual(2, len(result.turns))
         self.assertIn("<exec_response>", result.turns[0].exec_response or "")
 
+    def test_execution_block_uses_native_feedback_path(self) -> None:
+        runtime = FakeRuntime(
+            [
+                '{"source_kind":"wat","source":"(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))","mode":"auto","trace_limit":1}',
+                "42",
+            ]
+        )
+        orchestrator = QwenExecutionBlockOrchestrator(runtime)
+        messages = QwenExecutionOrchestrator.prepare_messages(
+            "What is 6 * 7?",
+            execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+        )
+        result = orchestrator.run(messages)
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("42", result.final_text)
+        self.assertEqual(1, result.native_execution_rounds)
+        self.assertIn("Native execution block response:", runtime.calls[1][-1]["content"])
+
     def test_run_stops_without_execution(self) -> None:
         runtime = FakeRuntime(["No exact execution was needed."])
         orchestrator = QwenExecutionOrchestrator(runtime)
@@ -191,6 +214,29 @@ class QwenTransformersOrchestratorTest(unittest.TestCase):
         self.assertTrue(result.used_execution)
         self.assertEqual("{", runtime.intercept_settings[0].request_prefix)
         self.assertEqual(1, result.structured_captures)
+
+    def test_answer_phase_clears_request_prefix(self) -> None:
+        runtime = FakeRuntime(
+            [
+                '{"source_kind":"wat","source":"(module (func (export \\"main\\") (result i32) i32.const 6 i32.const 7 i32.mul))","mode":"auto","trace_limit":1}',
+                "42",
+            ]
+        )
+        orchestrator = QwenExecutionOrchestrator(runtime)
+        result = orchestrator.run(
+            QwenExecutionOrchestrator.prepare_messages(
+                "Compute exactly.",
+                execution_prompt_mode=ExecutionPromptMode.STRUCTURED,
+            ),
+            settings=GenerationSettings(
+                intercept_request_boundary=True,
+                request_prefix="{",
+            ),
+        )
+
+        self.assertTrue(result.used_execution)
+        self.assertEqual("{", runtime.call_settings[0].request_prefix)
+        self.assertIsNone(runtime.call_settings[1].request_prefix)
 
     def test_run_uses_runtime_answer_fallback_for_json_fragment(self) -> None:
         runtime = FakeRuntime(

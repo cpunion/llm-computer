@@ -36,6 +36,11 @@ It provides:
   - resolves them through the local execution sidecar
   - feeds the resulting `<exec_response>...</exec_response>` back into the next
     generation step
+- `QwenExecutionBlockOrchestrator`
+  - reuses the same request extraction path
+  - executes supported requests through a pinned `transformer_hull` backend
+  - injects compact native execution feedback instead of an `<exec_response>`
+    text wrapper
 
 This is a real runtime integration in the sense that it can drive an actual
 `Transformers` model through the repository's sidecar protocol.
@@ -60,6 +65,8 @@ What completed successfully:
 - a fifth full live execution round-trip completed successfully with the same
   model through a prefilled structured prompt mode where the runtime injected
   the opening `{`
+- a sixth full live execution round-trip completed successfully with the same
+  model through the native execution-block mode
 
 Observed successful open-source live run:
 
@@ -131,6 +138,21 @@ Observed successful open-source live run with prefilled structured prompt mode:
   - `runtime_answer_fallbacks=1`
   - `turns=2`
 
+Observed successful open-source live run with native execution-block mode:
+
+- model: `Qwen/Qwen2.5-0.5B-Instruct`
+- device: `mps`
+- integration mode: `execution_block`
+- execution prompt mode: `structured`
+- runtime prefill: opening `{` injected before generation
+- runtime summary:
+  - `used_execution=true`
+  - `intercepted_requests=1`
+  - `structured_captures=1`
+  - `native_execution_rounds=1`
+  - `runtime_answer_fallbacks=0`
+  - `turns=2`
+
 What did not complete in this session:
 
 - a full live generation run from a downloaded `Qwen/Qwen3-8B` checkpoint
@@ -157,6 +179,8 @@ Interpretation:
   same real cached Qwen-family model
 - the prefilled structured prompt mode is also validated end-to-end through the
   same real cached Qwen-family model
+- the native execution-block mode is also validated end-to-end through the same
+  real cached Qwen-family model
 - the remaining open-source gap is specifically `Qwen3-8B` live validation, not
   the generic `Transformers + sidecar` integration
 
@@ -232,6 +256,18 @@ uv run llm-computer-qwen \
   --max-new-tokens 128 \
   --system 'Protocol requirement: do not answer directly. The runtime has already emitted the opening { of the JSON object. Continue with the remaining keys only, without restarting the object. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
   --prompt 'Compute 6 * 7 exactly.'
+
+uv run llm-computer-qwen \
+  --model-id Qwen/Qwen2.5-0.5B-Instruct \
+  --device mps \
+  --integration-mode execution_block \
+  --execution-prompt-mode structured \
+  --intercept-request-boundary \
+  --prefill-request-prefix \
+  --max-round-trips 3 \
+  --max-new-tokens 128 \
+  --system 'Protocol requirement: do not answer directly. The runtime has already emitted the opening { of the JSON object. Continue with the remaining keys only, without restarting the object. Set source_kind to "wat", mode to "auto", export_name to "main", and source to exactly this WAT module string: (module (func (export \"main\") (result i32) i32.const 6 i32.const 7 i32.mul)). After runtime feedback, reply with only the final integer.' \
+  --prompt 'Compute 6 * 7 exactly.'
 ```
 
 ## Why this is the right first step
@@ -248,8 +284,8 @@ This integration is intentionally conservative:
 The next implementation sequence should be:
 
 1. Complete one real local Qwen3 checkpoint download and rerun the scaffold.
-2. Replace the current structured-capture and prefix-prefill wrapper with a deeper runtime
-   interception path inside the inference engine.
+2. Replace the current structured-capture, prefix-prefill, and native execution-block
+   wrapper with a deeper runtime interception path inside the inference engine.
 3. Add execution-segment handling that is separate from ordinary conversation
    tokens.
 4. Prototype the same contract in `SGLang`.

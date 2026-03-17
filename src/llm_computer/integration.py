@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 import json
+from typing import Protocol
 
 from llm_computer.protocol import ExecutionRequest, ExecutionResponse
 from llm_computer.service import ExecutionService
+
+
+class ExecutionBackend(Protocol):
+    """Execution backend shared by wrapper, execution-block, and tool adapters."""
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResponse:
+        ...
 
 
 class OpenSourceRuntimeAdapter:
@@ -14,8 +22,13 @@ class OpenSourceRuntimeAdapter:
     REQUEST_TAG = "exec_request"
     RESPONSE_TAG = "exec_response"
 
-    def __init__(self, service: ExecutionService | None = None) -> None:
-        self.service = service or ExecutionService()
+    def __init__(
+        self,
+        *,
+        backend: ExecutionBackend | None = None,
+        service: ExecutionService | None = None,
+    ) -> None:
+        self.backend = backend or service or ExecutionService()
 
     @classmethod
     def system_prompt(cls) -> str:
@@ -89,18 +102,24 @@ class OpenSourceRuntimeAdapter:
             return None
         return cls.render_request_segment(request)
 
+    @classmethod
+    def parse_request(cls, text: str) -> ExecutionRequest | None:
+        canonical_segment = cls.try_extract_request_segment(text)
+        if canonical_segment is None:
+            if cls.contains_request_marker(text):
+                raise ValueError("Could not extract a valid JSON object from the execution request block")
+            return None
+        return ExecutionRequest.from_json(cls._extract_json_object(canonical_segment))
+
     def maybe_resolve(self, text: str) -> str:
         start_tag = f"<{self.REQUEST_TAG}>"
         end_tag = f"</{self.REQUEST_TAG}>"
         start_index = text.find(start_tag)
         end_index = text.find(end_tag, start_index + len(start_tag))
-        canonical_segment = self.try_extract_request_segment(text)
-        if canonical_segment is None:
-            if self.contains_request_marker(text):
-                raise ValueError("Could not extract a valid JSON object from the execution request block")
+        request = self.parse_request(text)
+        if request is None:
             return text
-        request = ExecutionRequest.from_json(self._extract_json_object(canonical_segment))
-        response = self.service.execute(request)
+        response = self.backend.execute(request)
         response_segment = self.render_response_segment(response)
         if start_index < 0 or end_index < 0:
             return response_segment
@@ -116,8 +135,13 @@ class ClosedSourceToolAdapter:
 
     TOOL_NAME = "run_llm_computer"
 
-    def __init__(self, service: ExecutionService | None = None) -> None:
-        self.service = service or ExecutionService()
+    def __init__(
+        self,
+        *,
+        backend: ExecutionBackend | None = None,
+        service: ExecutionService | None = None,
+    ) -> None:
+        self.backend = backend or service or ExecutionService()
 
     @classmethod
     def planner_instructions(cls) -> str:
@@ -139,7 +163,7 @@ class ClosedSourceToolAdapter:
 
     def invoke(self, arguments_json: str) -> str:
         request = ExecutionRequest.from_json(arguments_json)
-        response = self.service.execute(request)
+        response = self.backend.execute(request)
         return response.to_json()
 
     def invoke_dict(self, arguments: dict[str, object]) -> dict[str, object]:

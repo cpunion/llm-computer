@@ -248,6 +248,29 @@ Observed outcome:
   `intercepted_requests=1`, `structured_captures=1`, and
   `runtime_answer_fallbacks=1`
 
+## Stage 9: Native Execution Block Mode
+
+Goal:
+
+- keep the same request extraction path but resolve execution natively inside
+  the open-source orchestrator instead of routing through `<exec_response>` text
+
+Validation:
+
+```bash
+./scripts/stage9_qwen_execution_block.sh
+```
+
+Observed outcome:
+
+- `41` unit tests passed and `2` were skipped because optional dependency
+  branches are already installed in the environment
+- `python3 -m compileall src tests` completed successfully
+- the real open-source live run returned the final answer `42`
+- the runtime summary reported `used_execution=true`, `turns=2`,
+  `intercepted_requests=1`, `structured_captures=1`,
+  `native_execution_rounds=1`, and `runtime_answer_fallbacks=0`
+
 ## Current conclusion
 
 The repository has now validated three progressively stronger integration
@@ -263,6 +286,8 @@ claims:
    rather than relying exclusively on tagged request wrappers
 5. the open-source path now also supports runtime-prefilled request prefixes
    that further reduce how much request scaffolding the model must emit
+6. the open-source path now also supports a native execution-block mode that
+   removes the `<exec_response>` text round-trip from the execution loop
 
 The remaining gap to the article's stronger end state is still the same:
 

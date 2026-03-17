@@ -67,6 +67,8 @@ Current status:
   has been exercised end-to-end with the same cached Qwen-family model
 - the open-source path now also supports runtime-prefilled request prefixes and
   has been exercised end-to-end with the same cached Qwen-family model
+- the open-source path now also has a native execution-block orchestration mode
+  and has been exercised end-to-end with the same cached Qwen-family model
 - live `Qwen3-8B` checkpoint execution still depends on finishing a local
   download
 
@@ -133,6 +135,8 @@ Current prototype bridge:
   avoids asking the model for tagged request wrappers in the first place
 - `TransformersChatRuntime` now also supports runtime-prefilled request prefixes
   so the runtime can seed the execution request before model continuation
+- `QwenExecutionBlockOrchestrator` now also supports native execution feedback
+  on top of a pinned `transformer_hull` backend
 - the next step is to replace this wrapper-level interception with deeper
   runtime interception inside an open-weight inference engine
 

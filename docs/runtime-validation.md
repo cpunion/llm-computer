@@ -87,6 +87,11 @@ Observed status on 2026-03-17:
   model and returned the final answer `42`
 - the prefilled summary reported `intercepted_requests=1`,
   `structured_captures=1`, and `runtime_answer_fallbacks=1`
+- the native execution-block mode also completed a live run with the same model
+  and returned the final answer `42`
+- the native execution-block summary reported `intercepted_requests=1`,
+  `structured_captures=1`, `native_execution_rounds=1`, and
+  `runtime_answer_fallbacks=0`
 - live checkpoint downloads for `Qwen/Qwen3-8B` and `Qwen/Qwen3-0.6B` were also
   attempted but did not finish in the available session
 - the resulting conclusion is that the open-source runtime path is validated in
@@ -131,4 +136,10 @@ Validated prefilled structured-prompt command:
 
 ```bash
 ./scripts/stage8_qwen_prefilled_structured_mode.sh
+```
+
+Validated native execution-block command:
+
+```bash
+./scripts/stage9_qwen_execution_block.sh
 ```

@@ -131,6 +131,8 @@ The current example set includes:
   the need to ask the model for tagged execution requests,
 - a prefilled structured mode where the runtime injects the opening request
   prefix before generation continues,
+- an open-source execution-block mode where the orchestrator resolves execution
+  requests natively instead of round-tripping through `<exec_response>` text,
 - a Gemini closed-source integration that exercises the same sidecar contract
   through explicit tool calls.
 
@@ -147,5 +149,7 @@ Current live-validation status:
   the same cached Qwen-family model
 - the prefilled structured mode has also been validated end-to-end with the same
   cached Qwen-family model
+- the open-source execution-block mode has also been validated end-to-end with
+  the same cached Qwen-family model
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download

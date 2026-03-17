@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from base64 import b64decode
+from dataclasses import replace
 from time import perf_counter
 
 from llm_computer.executor import AppendOnlyWasmExecutor, HullTimeline, NaiveTimeline
@@ -98,3 +99,19 @@ class ExecutionService:
                 transformer_subset=False,
                 error=str(exc),
             )
+
+
+class PinnedExecutionBackend:
+    """Execution backend that forces all requests through one protocol mode."""
+
+    def __init__(
+        self,
+        mode: ExecutionMode,
+        *,
+        service: ExecutionService | None = None,
+    ) -> None:
+        self.mode = mode
+        self.service = service or ExecutionService()
+
+    def execute(self, request: ExecutionRequest) -> ExecutionResponse:
+        return self.service.execute(replace(request, mode=self.mode))

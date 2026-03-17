@@ -9,6 +9,8 @@ from llm_computer.qwen_transformers import (
     DEFAULT_QWEN_MODEL_ID,
     ExecutionPromptMode,
     GenerationSettings,
+    OpenSourceIntegrationMode,
+    QwenExecutionBlockOrchestrator,
     QwenExecutionOrchestrator,
 )
 
@@ -27,6 +29,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--do-sample", action="store_true", help="Enable sampling.")
     parser.add_argument("--enable-thinking", action="store_true", help="Enable Qwen thinking mode when supported.")
     parser.add_argument("--few-shot-example", action="store_true", help="Include one protocol demonstration exchange.")
+    parser.add_argument(
+        "--integration-mode",
+        default=OpenSourceIntegrationMode.WRAPPER.value,
+        choices=[mode.value for mode in OpenSourceIntegrationMode],
+        help="Open-source integration path to use.",
+    )
     parser.add_argument(
         "--execution-prompt-mode",
         default=ExecutionPromptMode.TAGGED.value,
@@ -49,8 +57,14 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
+    integration_mode = OpenSourceIntegrationMode(args.integration_mode)
     execution_prompt_mode = ExecutionPromptMode(args.execution_prompt_mode)
-    orchestrator = QwenExecutionOrchestrator.from_pretrained(
+    orchestrator_cls = (
+        QwenExecutionBlockOrchestrator
+        if integration_mode == OpenSourceIntegrationMode.EXECUTION_BLOCK
+        else QwenExecutionOrchestrator
+    )
+    orchestrator = orchestrator_cls.from_pretrained(
         model_id=args.model_id,
         device=args.device,
         torch_dtype=args.torch_dtype,
@@ -89,6 +103,7 @@ def main() -> None:
                 "intercepted_requests": result.intercepted_requests,
                 "structured_captures": result.structured_captures,
                 "runtime_answer_fallbacks": result.runtime_answer_fallbacks,
+                "native_execution_rounds": result.native_execution_rounds,
                 "turns": len(result.turns),
             },
             indent=2,
