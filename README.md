@@ -5,7 +5,7 @@ Fresh reimplementation inspired by Percepta's article
 
 Original article:
 
-- https://www.percepta.ai/blog/can-llms-be-computers
+- [Can LLMs Be Computers?](https://www.percepta.ai/blog/can-llms-be-computers)
 
 ## Latest snapshot
 
@@ -27,6 +27,15 @@ Original article:
   - an English long-form article at `docs/five-implementations-article.md`
   - a Chinese translation at `docs/five-implementations-article.zh-CN.md`
   - CSS-rendered PNG figures plus GIF/MP4 overview assets under `docs/assets/`
+- latest regression run on `2026-03-19`: `56` tests passed and `2` tests were
+  skipped because the "missing optional dependency" branches are not expected
+  to run in an environment where those dependencies are already installed
+- current test conclusions:
+  - the five-way comparison still returns the same canonical result `42`
+  - Hungarian `10x10` still succeeds across the local article-aligned backends
+  - the full Sudoku checksum still succeeds under the reference WASM executor
+  - append-only and transformer-style Sudoku prefix validation still matches
+    the reference snapshots at the recorded step budgets
 - the current remaining gap is still the same: no true execution heads inside a
   real open-weight model, no execution-only KV path, and no compilation of WASM
   semantics into model weights
