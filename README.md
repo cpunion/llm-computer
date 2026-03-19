@@ -3,42 +3,75 @@
 Fresh reimplementation inspired by Percepta's article
 "Can LLMs Be Computers?".
 
-Original article:
+## Source Article
 
-- [Can LLMs Be Computers?](https://www.percepta.ai/blog/can-llms-be-computers)
+| Item | Value |
+| --- | --- |
+| Title | [Can LLMs Be Computers?](https://www.percepta.ai/blog/can-llms-be-computers) |
+| Publisher | Percepta |
+| Focus | WASM execution inside transformer-style architectures |
 
 ## Latest snapshot
 
-- five execution paths now run inside one repository:
-  `reference_direct`, `append_only_naive_direct`,
-  `closed_source_sidecar`, `open_source_wrapper`, and
-  `open_source_execution_block`
-- the canonical five-way comparison returns the same final answer `42` across
-  all five paths
-- the open-source path has been live-validated with a real cached
-  Qwen-family model, and the closed-source path has been live-validated with
-  `gemini-3-flash-preview`
-- the article's Hungarian `10x10` example succeeds across the reference,
-  append-only naive, append-only hull, and transformer-hull paths
-- the article's Sudoku example succeeds end-to-end under the reference WASM
-  executor and has preserved prefix-state validation artifacts for the
-  append-only and transformer-style paths
-- the repository now includes:
-  - an English long-form article at `docs/five-implementations-article.md`
-  - a Chinese translation at `docs/five-implementations-article.zh-CN.md`
-  - CSS-rendered PNG figures plus GIF/MP4 overview assets under `docs/assets/`
-- latest regression run on `2026-03-19`: `56` tests passed and `2` tests were
-  skipped because the "missing optional dependency" branches are not expected
-  to run in an environment where those dependencies are already installed
-- current test conclusions:
-  - the five-way comparison still returns the same canonical result `42`
-  - Hungarian `10x10` still succeeds across the local article-aligned backends
-  - the full Sudoku checksum still succeeds under the reference WASM executor
-  - append-only and transformer-style Sudoku prefix validation still matches
-    the reference snapshots at the recorded step budgets
-- the current remaining gap is still the same: no true execution heads inside a
-  real open-weight model, no execution-only KV path, and no compilation of WASM
-  semantics into model weights
+| Item | Current status |
+| --- | --- |
+| Execution paths | `reference_direct`, `append_only_naive_direct`, `closed_source_sidecar`, `open_source_wrapper`, `open_source_execution_block` |
+| Latest regression run | `56` passed, `2` skipped on `2026-03-19` |
+| Open-source live validation | real cached Qwen-family model |
+| Closed-source live validation | `gemini-3-flash-preview` |
+| Article examples | Hungarian `10x10` validated; Sudoku checksum validated; Sudoku prefix snapshots validated |
+| Articles | English: `docs/five-implementations-article.md`; Chinese: `docs/five-implementations-article.zh-CN.md` |
+| Visual assets | CSS-rendered PNG figures plus GIF/MP4 overview under `docs/assets/` |
+| Remaining gap | no true execution heads inside a real open-weight model, no execution-only KV path, no WASM-semantics-to-weights compilation |
+
+## Five-way comparison
+
+| Method | Category | End-to-end | Final value | Runtime signal |
+| --- | --- | ---: | ---: | --- |
+| `reference_direct` | direct | `30.85 ms` | `42` | semantic control |
+| `append_only_naive_direct` | direct | `17.52 ms` | `42` | append-only naive retrieval |
+| `open_source_wrapper` | open source | `1.178 s` | `42` | `structured_captures=1` |
+| `open_source_execution_block` | open source | `857.05 ms` | `42` | `native_execution_rounds=1` |
+| `closed_source_sidecar` | closed source | `4.115 s` | `42` | `tool_calls=1` |
+
+![Five-way execution ladder](docs/assets/five-implementation-ladder.png)
+
+![Five-way latency chart](docs/assets/five-implementation-latency.png)
+
+## Article example validation
+
+| Example | Backend | Result | Steps | Elapsed | Status |
+| --- | --- | ---: | ---: | ---: | --- |
+| Hungarian `10x10` | `reference` | `206` | `17,491` | `16.70 ms` | pass |
+| Hungarian `10x10` | `append_only_naive` | `206` | `17,491` | `6.305 s` | pass |
+| Hungarian `10x10` | `append_only_hull` | `206` | `17,491` | `485.46 ms` | pass |
+| Hungarian `10x10` | `transformer_hull` | `206` | `17,491` | `1.729 s` | pass |
+| Sudoku checksum | `reference` | `1276684605` | `22,370,167` | `26.895 s` | pass |
+
+![Article examples](docs/assets/article-example-results.png)
+
+## Sudoku prefix validation
+
+| Budget | Backend | Elapsed | Matches reference |
+| ---: | --- | ---: | --- |
+| `1,000` | `append_only_naive` | `23.62 ms` | yes |
+| `1,000` | `append_only_hull` | `15.23 ms` | yes |
+| `1,000` | `transformer_hull` | `160.51 ms` | yes |
+| `10,000` | `append_only_naive` | `2.185 s` | yes |
+| `10,000` | `append_only_hull` | `245.70 ms` | yes |
+| `10,000` | `transformer_hull` | `1.825 s` | yes |
+| `100,000` | `append_only_hull` | `3.736 s` | yes |
+| `100,000` | `transformer_hull` | `20.441 s` | yes |
+
+![Sudoku prefix validation](docs/assets/sudoku-prefix-validation.png)
+
+## Runtime boundary map
+
+![Execution boundaries](docs/assets/five-implementation-paths.png)
+
+## Validation matrix
+
+![Validation matrix](docs/assets/five-implementation-validation-matrix.png)
 
 ## Goal
 
