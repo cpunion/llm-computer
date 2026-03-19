@@ -3,6 +3,34 @@
 Fresh reimplementation inspired by Percepta's article
 "Can LLMs Be Computers?".
 
+Original article:
+
+- https://www.percepta.ai/blog/can-llms-be-computers
+
+## Latest snapshot
+
+- five execution paths now run inside one repository:
+  `reference_direct`, `append_only_naive_direct`,
+  `closed_source_sidecar`, `open_source_wrapper`, and
+  `open_source_execution_block`
+- the canonical five-way comparison returns the same final answer `42` across
+  all five paths
+- the open-source path has been live-validated with a real cached
+  Qwen-family model, and the closed-source path has been live-validated with
+  `gemini-3-flash-preview`
+- the article's Hungarian `10x10` example succeeds across the reference,
+  append-only naive, append-only hull, and transformer-hull paths
+- the article's Sudoku example succeeds end-to-end under the reference WASM
+  executor and has preserved prefix-state validation artifacts for the
+  append-only and transformer-style paths
+- the repository now includes:
+  - an English long-form article at `docs/five-implementations-article.md`
+  - a Chinese translation at `docs/five-implementations-article.zh-CN.md`
+  - CSS-rendered PNG figures plus GIF/MP4 overview assets under `docs/assets/`
+- the current remaining gap is still the same: no true execution heads inside a
+  real open-weight model, no execution-only KV path, and no compilation of WASM
+  semantics into model weights
+
 ## Goal
 
 This repository focuses on the parts of the article that are concrete enough to
@@ -99,6 +127,8 @@ This repository does **not** claim to fully reproduce the original article:
   validation output.
 - `docs/five-implementations-article.md`: the long-form article that explains
   the five implementation ladder with generated figures and animation.
+- `docs/five-implementations-article.zh-CN.md`: Chinese translation of the
+  five-implementation article.
 - `docs/sudoku-result-validation.md`: full-checksum and prefix-state validation
   report for the article's Sudoku example.
 - `docs/sudoku-result-validation.json`: raw machine-readable Sudoku validation
@@ -205,5 +235,7 @@ Current live-validation status:
 - the repository now includes a generated long-form article with CSS-rendered
   PNG figures and a Remotion overview animation covering all five
   implementation layers
+- the repository now also includes a checked-in Chinese translation of that
+  article for parallel publication
 - `Qwen3-8B` specifically still requires completing the local checkpoint
   download
